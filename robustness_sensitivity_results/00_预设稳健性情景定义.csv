@@ -1,0 +1,22 @@
+﻿AnalysisLayer,EvidenceChain,ScenarioID,ScenarioGroup,ScenarioDescription,id,group,description,extreme_threshold,normal_low,normal_high,min_status_hours,min_cbi_hours,min_event_hours,min_reference_hours,min_macro_sd,apply_event_macro_sd,event_threshold,min_duration_days
+Hourly_state,Hourly_state,BASE,Baseline,基准情景：Extreme <= -2.0；Normal -0.5 < SPI < 0.5,BASE,Baseline,基准情景：Extreme <= -2.0；Normal -0.5 < SPI < 0.5,-2.0,-0.5,0.5,72.0,72.0,72,72,1.0,False,,
+Hourly_state,Hourly_state,E15,Extreme_threshold,E15：Extreme 改为 SPI <= -1.5；用于检验放宽极端干旱阈值后的稳健性,E15,Extreme_threshold,E15：Extreme 改为 SPI <= -1.5；用于检验放宽极端干旱阈值后的稳健性,-1.5,-0.5,0.5,72.0,72.0,72,72,1.0,False,,
+Hourly_state,Hourly_state,E18,Extreme_threshold,E18：Extreme 改为 SPI <= -1.8；用于检验略微放宽极端干旱阈值后的稳健性,E18,Extreme_threshold,E18：Extreme 改为 SPI <= -1.8；用于检验略微放宽极端干旱阈值后的稳健性,-1.8,-0.5,0.5,72.0,72.0,72,72,1.0,False,,
+Hourly_state,Hourly_state,E22,Extreme_threshold,E22：Extreme 改为 SPI <= -2.2；用于检验收紧极端干旱阈值后的稳健性,E22,Extreme_threshold,E22：Extreme 改为 SPI <= -2.2；用于检验收紧极端干旱阈值后的稳健性,-2.2,-0.5,0.5,72.0,72.0,72,72,1.0,False,,
+Hourly_state,Hourly_state,N025,Normal_window,N025：Normal 改为 -0.25 < SPI < 0.25；用于检验收紧正常窗口后的稳健性,N025,Normal_window,N025：Normal 改为 -0.25 < SPI < 0.25；用于检验收紧正常窗口后的稳健性,-2.0,-0.25,0.25,72.0,72.0,72,72,1.0,False,,
+Hourly_state,Hourly_state,N075,Normal_window,N075：Normal 改为 -0.75 < SPI < 0.75；用于检验放宽正常窗口后的稳健性,N075,Normal_window,N075：Normal 改为 -0.75 < SPI < 0.75；用于检验放宽正常窗口后的稳健性,-2.0,-0.75,0.75,72.0,72.0,72,72,1.0,False,,
+Hourly_state,Hourly_state,N10,Normal_window,N10：Normal 改为 -1.0 < SPI < 1.0；用于检验进一步放宽正常窗口后的稳健性,N10,Normal_window,N10：Normal 改为 -1.0 < SPI < 1.0；用于检验进一步放宽正常窗口后的稳健性,-2.0,-1.0,1.0,72.0,72.0,72,72,1.0,False,,
+Hourly_state,Hourly_state,C3,Joint_definition,C3：Extreme <= -1.8，且 Normal -0.75 < SPI < 0.75；联合放宽两端定义,C3,Joint_definition,C3：Extreme <= -1.8，且 Normal -0.75 < SPI < 0.75；联合放宽两端定义,-1.8,-0.75,0.75,72.0,72.0,72,72,1.0,False,,
+Hourly_state,Hourly_state,C4,Joint_definition,C4：Extreme <= -2.2，且 Normal -0.25 < SPI < 0.25；联合收紧两端定义,C4,Joint_definition,C4：Extreme <= -2.2，且 Normal -0.25 < SPI < 0.25；联合收紧两端定义,-2.2,-0.25,0.25,72.0,72.0,72,72,1.0,False,,
+Hourly_state,Hourly_state,C5,Joint_definition,C5：Extreme <= -1.8，且 Normal -0.25 < SPI < 0.25；放宽 Extreme、收紧 Normal,C5,Joint_definition,C5：Extreme <= -1.8，且 Normal -0.25 < SPI < 0.25；放宽 Extreme、收紧 Normal,-1.8,-0.25,0.25,72.0,72.0,72,72,1.0,False,,
+Hourly_state,Hourly_state,H48,Minimum_hours,H48：最低小时门槛改为 48 小时；用于检验放宽样本小时要求后的稳健性,H48,Minimum_hours,H48：最低小时门槛改为 48 小时；用于检验放宽样本小时要求后的稳健性,-2.0,-0.5,0.5,48.0,48.0,72,72,1.0,False,,
+Hourly_state,Hourly_state,H120,Minimum_hours,H120：最低小时门槛改为 120 小时；用于检验收紧样本小时要求后的稳健性,H120,Minimum_hours,H120：最低小时门槛改为 120 小时；用于检验收紧样本小时要求后的稳健性,-2.0,-0.5,0.5,120.0,120.0,72,72,1.0,False,,
+Hourly_state,Hourly_state,H168,Minimum_hours,H168：最低小时门槛改为 168 小时；用于检验更严格样本门槛下的稳健性,H168,Minimum_hours,H168：最低小时门槛改为 168 小时；用于检验更严格样本门槛下的稳健性,-2.0,-0.5,0.5,168.0,168.0,72,72,1.0,False,,
+Hourly_state,Hourly_state,M05,MacroSD_CBI_only,M05：CBI 的 MacroSD 门槛改为 0.5 ℃；用于检验放宽宏气候波动要求后的稳健性,M05,MacroSD_CBI_only,M05：CBI 的 MacroSD 门槛改为 0.5 ℃；用于检验放宽宏气候波动要求后的稳健性,-2.0,-0.5,0.5,72.0,72.0,72,72,0.5,True,,
+Hourly_state,Hourly_state,M075,MacroSD_CBI_only,M075：CBI 的 MacroSD 门槛改为 0.75 ℃；用于检验略微放宽宏气候波动要求后的稳健性,M075,MacroSD_CBI_only,M075：CBI 的 MacroSD 门槛改为 0.75 ℃；用于检验略微放宽宏气候波动要求后的稳健性,-2.0,-0.5,0.5,72.0,72.0,72,72,0.75,True,,
+Hourly_state,Hourly_state,M15,MacroSD_CBI_only,M15：CBI 的 MacroSD 门槛改为 1.5 ℃；用于检验收紧宏气候波动要求后的稳健性,M15,MacroSD_CBI_only,M15：CBI 的 MacroSD 门槛改为 1.5 ℃；用于检验收紧宏气候波动要求后的稳健性,-2.0,-0.5,0.5,72.0,72.0,72,72,1.5,True,,
+Event_definition,Event_definition,BASE,Baseline,基准事件定义：事件 SPI <= -0.5，至少6天；完整事件内最低 SPI <= -2.0,BASE,Baseline,基准事件定义：事件 SPI <= -0.5，至少6天；完整事件内最低 SPI <= -2.0,-2.0,-0.5,0.5,,,72,72,,,-0.5,6.0
+Event_definition,Event_definition,D05,Minimum_duration,D05：事件 SPI <= -0.5，至少5天；检验纳入较短事件后的稳健性,D05,Minimum_duration,D05：事件 SPI <= -0.5，至少5天；检验纳入较短事件后的稳健性,-2.0,-0.5,0.5,,,72,72,,,-0.5,5.0
+Event_definition,Event_definition,D10,Minimum_duration,D10：事件 SPI <= -0.5，至少10天；检验仅保留较长事件后的稳健性,D10,Minimum_duration,D10：事件 SPI <= -0.5，至少10天；检验仅保留较长事件后的稳健性,-2.0,-0.5,0.5,,,72,72,,,-0.5,10.0
+Event_definition,Event_definition,B00,Event_boundary,B00：事件 SPI <= 0.0，至少6天；检验较宽事件边界后的稳健性,B00,Event_boundary,B00：事件 SPI <= 0.0，至少6天；检验较宽事件边界后的稳健性,-2.0,-0.5,0.5,,,72,72,,,0.0,6.0
+Event_definition,Event_definition,B10,Event_boundary,B10：事件 SPI <= -1.0，至少6天；检验较严事件边界后的稳健性,B10,Event_boundary,B10：事件 SPI <= -1.0，至少6天；检验较严事件边界后的稳健性,-2.0,-0.5,0.5,,,72,72,,,-1.0,6.0

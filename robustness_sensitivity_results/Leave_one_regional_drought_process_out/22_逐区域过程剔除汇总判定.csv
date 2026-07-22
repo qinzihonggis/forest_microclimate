@@ -1,0 +1,2 @@
+﻿AnalysisLayer,EvidenceChain,BASE_Event_Delta_Mean,BASE_Event_CI_low95,BASE_Event_CI_high95,BASE_Event_P_two_sided,RegionalProcessesTested,LORPO_valid_runs,LORPO_same_direction_as_BASE,LORPO_CI_crosses_zero,LORPO_direction_reversals,LORPO_model_not_estimable,LORPO_direction_reversal_processes
+Event_reference,Event_reference_CBI_LORPO,0.05711394910491151,0.018815153628805207,0.0939425342439352,0.005,4,4,4,0,0,0,

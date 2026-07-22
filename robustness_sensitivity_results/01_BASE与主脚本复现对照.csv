@@ -1,0 +1,13 @@
+﻿Metric,Robustness_BASE,Main_script,Match,Main_output_source,Note
+Hourly_state BASE | LMM hourly rows,6384.0,6384.0,True,01_主LMM逐小时分析数据集.csv,
+Hourly_state BASE | LMM sites,13.0,13.0,True,01_主LMM逐小时分析数据集.csv,
+Hourly_state BASE | LMM SiteMonths,16.0,16.0,True,01_主LMM逐小时分析数据集.csv,
+Hourly_state BASE | LMM Extreme hours,2400.0,2400.0,True,01_主LMM逐小时分析数据集.csv,
+Hourly_state BASE | LMM Normal hours,3984.0,3984.0,True,01_主LMM逐小时分析数据集.csv,
+Hourly_state BASE | LMM Delta CBI,0.033288902415292865,0.0332889024152928,True,02_主LMM核心结果.csv,
+Hourly_state BASE | SiteMonth CBI pairs,16.0,16.0,True,03_站点月份CBI配对变化审计表.csv,
+Hourly_state BASE | Event-reference CBI pairs,27.0,27.0,True,04_极端事件CBI与事件后正常参考期对比表.csv,BASE event CBI uses the main script's hour-only quality rule.
+Event_definition BASE | Identified total events,197.0,197.0,True,福建省观测站2025年daily_SPI干旱事件长表.csv,
+Event_definition BASE | Extreme events,27.0,27.0,True,福建省观测站2025年daily_SPI干旱事件长表.csv,
+Event_definition BASE | Event sites,27.0,27.0,True,福建省观测站2025年daily_SPI干旱事件长表.csv,
+Event_definition BASE | Event-reference CBI pairs,27.0,27.0,True,04_极端事件CBI与事件后正常参考期对比表.csv,

@@ -1,0 +1,2 @@
+﻿AnalysisLayer,EvidenceChain,BASE_Delta_CBI,BASE_CI_low95,BASE_CI_high95,BASE_Pvalue,BASE_included_sites,LOSO_runs_requested,LOSO_valid_runs,LOSO_same_direction_as_BASE,LOSO_positive_delta,LOSO_CI_crosses_zero,LOSO_direction_reversals,LOSO_model_not_estimable,LOSO_direction_reversal_sites
+Hourly_state,Leave_one_site_out_BASE_LMM,0.033288902415292865,0.013506689378142797,0.05307111545244293,0.0009731810264060805,13,13,13,13,13,1,0,0,

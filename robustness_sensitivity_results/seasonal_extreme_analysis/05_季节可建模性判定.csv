@@ -1,0 +1,5 @@
+﻿Season,Season_CN,EligibleSiteMonths,EligibleSites,LargestSiteContribution,ExtremeHours,NormalHours,ExtremeEvents,EventSites,CanRunLMM_Suggested,LMM_Reason,CanRunEventCBI_Suggested,EventCBI_Reason,BoundarySeasonFlag,Caution
+Spring,春季(3-5月),5,5,0.2,1104,1272,8,7,audit_only_do_not_fit_lmm,合格SiteMonth或站点数不足，默认只报告审计。,candidate_confirm_manually,事件数和事件站点数初步满足候选事件CBI分析条件；仍需人工确认。,no,
+Summer,夏季(6-8月),6,6,0.16666666666666666,792,1392,16,16,exploratory_only_confirm_manually,样本达到探索性分析下限，但不建议作为强季节结论。,candidate_confirm_manually,事件数和事件站点数初步满足候选事件CBI分析条件；仍需人工确认。,no,
+Autumn,秋季(9-11月),5,5,0.2,504,1320,0,0,audit_only_do_not_fit_lmm,合格SiteMonth或站点数不足，默认只报告审计。,audit_only_do_not_fit_event_CBI,事件数或事件站点数不足，默认不运行季节事件CBI。,no,
+Winter,冬季(12-2月),0,0,,0,0,3,3,audit_only_do_not_fit_lmm,合格SiteMonth或站点数不足，默认只报告审计。,audit_only_do_not_fit_event_CBI,事件数或事件站点数不足，默认不运行季节事件CBI。,yes,冬季在单年数据中通常是不完整边界季，解释必须谨慎。

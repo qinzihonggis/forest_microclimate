@@ -1,0 +1,21 @@
+季节样本审计与季节模型运行说明
+========================================================================
+RUN_SEASONAL_MODULE = True
+RUN_SEASONAL_LMM = False
+SEASONS_TO_RUN_LMM = []
+RUN_SEASONAL_EVENT_CBI = False
+SEASONS_TO_RUN_EVENT_CBI = []
+
+默认原则：第一次运行只生成审计表，不自动拟合任何季节 LMM 或季节事件 CBI。
+审计表中的建议字段只是透明提示，不是自动建模许可；正式建模必须由用户手动填写季节列表。
+
+固定 BASE 规则：Extreme 为 SPI30d <= -2.0；Normal 为 -0.5 < SPI30d < 0.5；
+每个 Site_ID × YearMonth × SPI_Status 至少 72 小时，且同一 SiteMonth 必须同时满足 Extreme 和 Normal。
+Macro_Within 仍按同一 SiteMonth 的全部有效小时均值中心化，不能在季节子样本内重新定义。
+
+季节可建模性摘要：
+Season Season_CN  EligibleSiteMonths  EligibleSites  LargestSiteContribution  ExtremeHours  NormalHours  ExtremeEvents  EventSites               CanRunLMM_Suggested                 LMM_Reason        CanRunEventCBI_Suggested                  EventCBI_Reason BoundarySeasonFlag                   Caution
+Spring  春季(3-5月)                   5              5                 0.200000          1104         1272              8           7         audit_only_do_not_fit_lmm 合格SiteMonth或站点数不足，默认只报告审计。      candidate_confirm_manually 事件数和事件站点数初步满足候选事件CBI分析条件；仍需人工确认。                 no                          
+Summer  夏季(6-8月)                   6              6                 0.166667           792         1392             16          16 exploratory_only_confirm_manually   样本达到探索性分析下限，但不建议作为强季节结论。      candidate_confirm_manually 事件数和事件站点数初步满足候选事件CBI分析条件；仍需人工确认。                 no                          
+Autumn 秋季(9-11月)                   5              5                 0.200000           504         1320              0           0         audit_only_do_not_fit_lmm 合格SiteMonth或站点数不足，默认只报告审计。 audit_only_do_not_fit_event_CBI        事件数或事件站点数不足，默认不运行季节事件CBI。                 no                          
+Winter 冬季(12-2月)                   0              0                      NaN             0            0              3           3         audit_only_do_not_fit_lmm 合格SiteMonth或站点数不足，默认只报告审计。 audit_only_do_not_fit_event_CBI        事件数或事件站点数不足，默认不运行季节事件CBI。                yes 冬季在单年数据中通常是不完整边界季，解释必须谨慎。

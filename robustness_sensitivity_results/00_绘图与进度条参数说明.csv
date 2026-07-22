@@ -1,0 +1,39 @@
+﻿类别,参数名,当前值
+绘图参数,FIG_DPI,300
+绘图参数,FIG_FOREST_WIDTH,10
+绘图参数,FIG_FOREST_MIN_HEIGHT,5
+绘图参数,FIG_FOREST_HEIGHT_PER_SCENARIO,0.42
+绘图参数,COLOR_BASE_SCENARIO,#D7301F
+绘图参数,COLOR_OTHER_SCENARIO,#2C7FB8
+绘图参数,COLOR_CI,#595959
+绘图参数,COLOR_ZERO_LINE,#000000
+绘图参数,LINEWIDTH_ZERO,1.0
+绘图参数,LINESTYLE_ZERO,--
+绘图参数,LINEWIDTH_CI,1.2
+绘图参数,CI_CAPSIZE,3
+绘图参数,SCATTER_SIZE_FOREST,42
+绘图参数,FIGURE_BBOX,tight
+绘图参数,LEGEND_SHOW,True
+绘图参数,LEGEND_LOCATION,center left
+绘图参数,LEGEND_BBOX_TO_ANCHOR,"(1.02, 0.5)"
+绘图参数,LEGEND_FRAME_ON,True
+绘图参数,LEGEND_FONT_SIZE,9
+绘图参数,LEGEND_TITLE,图例
+绘图参数,LEGEND_BASE_LABEL,BASE 基准情景
+绘图参数,LEGEND_OTHER_LABEL,非 BASE 敏感性情景
+绘图参数,LEGEND_CI_LABEL,95% 置信区间
+绘图参数,LEGEND_ZERO_LABEL,Delta CBI = 0
+终端进度条,读取与质控_颜色,cyan
+终端进度条,情景覆盖_颜色,green
+终端进度条,事件覆盖_颜色,magenta
+终端进度条,LMM拟合_颜色,blue
+终端进度条,站点月份CBI_颜色,yellow
+终端进度条,事件CBI_颜色,red
+终端进度条,Bootstrap_颜色,cyan
+终端进度条,绘图_颜色,magenta
+终端进度条,结果写出_颜色,green
+终端进度条,缓存清理_颜色,white
+终端进度条,逐站点剔除_颜色,red
+终端进度条,逐区域过程剔除_颜色,magenta
+终端进度条,过程恢复_颜色,blue
+终端进度条,季节审计_颜色,cyan

@@ -1,0 +1,6 @@
+﻿RunType,HeldOutRegionalProcessID,RetainedInputExtremeEvents,ValidEventReferencePairs,ValidEventSites,Event_Flag,HeldOutProcessNEvents,HeldOutProcessNSites
+BASE_full_event_set,None,27,27,20,ok,,
+LORPO,RP01,24,24,20,ok,3.0,3.0
+LORPO,RP02,20,20,19,ok,7.0,7.0
+LORPO,RP03,20,20,17,ok,7.0,7.0
+LORPO,RP04,17,17,10,ok,10.0,10.0

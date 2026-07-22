@@ -1,0 +1,13 @@
+﻿Season,Season_CN,SPI_Status,Hours,Days,Sites,SiteMonths
+Spring,春季(3-5月),Extreme,1176,10,7,7
+Spring,春季(3-5月),Normal,27912,80,27,81
+Spring,春季(3-5月),Other,30528,88,27,81
+Summer,夏季(6-8月),Extreme,1128,15,16,17
+Summer,夏季(6-8月),Normal,23016,84,27,78
+Summer,夏季(6-8月),Other,35472,92,27,81
+Autumn,秋季(9-11月),Extreme,576,6,7,7
+Autumn,秋季(9-11月),Normal,33264,91,27,81
+Autumn,秋季(9-11月),Other,25128,90,27,79
+Winter,冬季(12-2月),Extreme,72,1,3,3
+Winter,冬季(12-2月),Normal,11072,42,27,53
+Winter,冬季(12-2月),Other,34648,70,27,80
