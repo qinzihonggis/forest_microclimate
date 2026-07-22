@@ -1,0 +1,11 @@
+﻿参数组,参数名,当前值,用途说明
+路径,output_dir,E:\forest_microclimate\ForestMicroclimate\results\论文主图\Fig5_稳健性图,Fig5 输入输出路径。
+路径,robustness_dir,E:\forest_microclimate\ForestMicroclimate\results\robustness_sensitivity_results,Fig5 输入输出路径。
+路径,loso_dir,E:\forest_microclimate\ForestMicroclimate\results\robustness_sensitivity_results\Leave_one_site_out,Fig5 输入输出路径。
+路径,lorpo_dir,E:\forest_microclimate\ForestMicroclimate\results\robustness_sensitivity_results\Leave_one_regional_drought_process_out,Fig5 输入输出路径。
+路径,multilevel_dir,E:\forest_microclimate\ForestMicroclimate\results\compare_differences_results\多等级干旱扩展分析,Fig5 输入输出路径。
+路径,figure_dpi,600,Fig5 输入输出路径。
+图形参数,fig_width,11.5,控制 Fig5 占位图或后续森林图外观。
+图形参数,fig_height,5.6,控制 Fig5 占位图或后续森林图外观。
+图形参数,title_size,12,控制 Fig5 占位图或后续森林图外观。
+图形参数,text_size,10,控制 Fig5 占位图或后续森林图外观。

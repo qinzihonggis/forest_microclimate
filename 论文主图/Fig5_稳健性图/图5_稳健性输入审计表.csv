@@ -1,0 +1,5 @@
+﻿路径,是否存在,文件大小字节,行数,用途
+E:\forest_microclimate\ForestMicroclimate\results\robustness_sensitivity_results\05_全部稳健性分析结果汇总.csv,True,14175,21.0,Fig5A 阈值/事件定义敏感性
+E:\forest_microclimate\ForestMicroclimate\results\robustness_sensitivity_results\Leave_one_site_out\21_Leave_one_site_out_逐站点剔除LMM结果.csv,True,4958,13.0,Fig5B 逐站点删除
+E:\forest_microclimate\ForestMicroclimate\results\robustness_sensitivity_results\Leave_one_regional_drought_process_out\22_逐区域过程剔除事件CBI结果.csv,True,1626,4.0,Fig5C 逐区域过程删除
+E:\forest_microclimate\ForestMicroclimate\results\compare_differences_results\多等级干旱扩展分析\05_多等级_LMM结果汇总.csv,True,2058,4.0,多等级响应辅助证据

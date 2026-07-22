@@ -1,0 +1,5 @@
+﻿Target_Class,Target_Class_CN,n_SiteMonth_Pass_Hours,n_SiteMonth_Pass_Hours_Plus_Macro_SD,n_sites,n_site_months,n_year_months,n_month_factor_levels,months_present,year_months_present,n_hours_Target,n_hours_Normal,CanRunMixedLM_Suggested,Suggested_Reason,Selected_By_USER_MODEL_CLASSES_TO_RUN
+Mild,轻度干旱,159,159,27,159,10,10,"2,4,5,6,7,8,9,10,11,12","2025-02,2025-04,2025-05,2025-06,2025-07,2025-08,2025-09,2025-10,2025-11,2025-12",32600,50448,True,ok,True
+Moderate,中度干旱,114,114,26,114,8,8,"2,4,5,6,7,8,9,12","2025-02,2025-04,2025-05,2025-06,2025-07,2025-08,2025-09,2025-12",18408,31656,True,ok,True
+Severe,重度干旱,44,44,23,44,6,6,"4,6,7,8,9,12","2025-04,2025-06,2025-07,2025-08,2025-09,2025-12",5544,11280,True,ok,True
+Extreme,极端干旱,16,16,13,16,3,3,"4,8,9","2025-04,2025-08,2025-09",2400,3984,True,ok,True

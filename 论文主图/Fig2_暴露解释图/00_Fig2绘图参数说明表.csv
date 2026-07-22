@@ -1,0 +1,52 @@
+﻿参数组,参数名,当前值,用途说明
+路径与阈值,project_dir,E:\forest_microclimate\ForestMicroclimate,输入输出路径或分析阈值。
+路径与阈值,output_dir,E:\forest_microclimate\ForestMicroclimate\results\论文主图\Fig2_暴露解释图,输入输出路径或分析阈值。
+路径与阈值,response_near_zero_threshold,0.05,响应方向分组阈值；abs(Delta_CBI) <= 该值视为近似稳定。
+路径与阈值,figure_dpi,600,输入输出路径或分析阈值。
+图形参数,fig_width,12.0,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,fig_height,5.3,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,grid_left,0.07,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,grid_right,0.96,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,grid_bottom,0.18,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,grid_top,0.76,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,grid_wspace,0.3,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,axes_linewidth,0.8,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,axis_label_size,9,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,title_size,10,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,tick_label_size,8,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,legend_font_size,8,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,suptitle_size,12,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_point_size,52,Fig.2A 模型估计点大小。
+图形参数,panel_a_ci_linewidth,1.4,Fig.2A 95% CI 误差线宽度。
+图形参数,panel_a_zero_line_color,#404040,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_zero_linewidth,0.8,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_zero_linestyle,--,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_point_color,#b45a3c,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_ci_color,#5c2f25,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_raw_point_alpha,0.0,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_label_fontsize,7,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_label_offset,0.004,Fig.2A n_sites 和 SiteMonth 标注距离 CI 上界的偏移量。
+图形参数,panel_a_ylim_padding,0.018,Fig.2A y 轴上限额外留白，避免标注贴近标题。
+图形参数,panel_a_xlim_padding,0.18,Fig.2A x 轴左右额外留白，避免首末标签压住图框。
+图形参数,panel_a_edge_label_inset,0.1,Fig.2A 首末样本量标签向图内移动的距离。
+图形参数,panel_a_trend_box_x,0.03,Fig.2A 有序趋势检验 p 值标签的横向相对位置。
+图形参数,panel_a_trend_box_y,0.94,Fig.2A 有序趋势检验 p 值标签的纵向相对位置。
+图形参数,scatter_point_size,48,Fig.2B/C 事件-站点散点大小。
+图形参数,scatter_point_alpha,0.82,Fig.2B/C 散点透明度。
+图形参数,scatter_edgecolor,white,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,scatter_linewidth,0.45,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,trend_line_color,#2f2f2f,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,trend_linewidth,1.2,Fig.2B/C 描述性趋势线宽度。
+图形参数,trend_band_alpha,0.16,Fig.2B/C 描述性趋势带透明度。
+图形参数,zero_line_color,#4d4d4d,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,zero_linewidth,0.8,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,zero_linestyle,--,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,strengthened_color,#2b83ba,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,stable_color,#bdbdbd,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,weakened_color,#d7191c,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,strengthened_label,Strengthened or maintained,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,stable_label,Near-zero change,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,weakened_label,Weakened buffering,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,legend_anchor_x,0.5,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,legend_anchor_y,0.855,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,legend_marker_size,7,控制图例、线条、点大小、颜色、字体或版式。

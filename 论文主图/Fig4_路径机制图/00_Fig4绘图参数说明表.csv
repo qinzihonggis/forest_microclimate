@@ -1,0 +1,12 @@
+﻿参数组,参数名,当前值,用途说明
+路径与输入,output_dir,E:\forest_microclimate\ForestMicroclimate\results\论文主图\Fig4_路径机制图,Fig4 输出路径或路径模型输入。
+路径与输入,fig3_candidate_table,E:\forest_microclimate\ForestMicroclimate\results\论文主图\Fig3_过程差异图\图3_候选过程变量筛选表.csv,Fig4 输出路径或路径模型输入。
+路径与输入,event_exposure_table,E:\forest_microclimate\ForestMicroclimate\results\论文主图\Fig2_暴露解释图\图2_干旱暴露与DeltaCBI分析基础表.csv,Fig4 输出路径或路径模型输入。
+路径与输入,figure_dpi,600,Fig4 输出路径或路径模型输入。
+图形参数,fig_width,10.0,控制 Fig4 框架图外观。
+图形参数,fig_height,5.8,控制 Fig4 框架图外观。
+图形参数,node_facecolor,#f4efe6,控制 Fig4 框架图外观。
+图形参数,node_edgecolor,#343434,控制 Fig4 框架图外观。
+图形参数,arrow_color,#5b5b5b,控制 Fig4 框架图外观。
+图形参数,title_size,12,控制 Fig4 框架图外观。
+图形参数,text_size,10,控制 Fig4 框架图外观。

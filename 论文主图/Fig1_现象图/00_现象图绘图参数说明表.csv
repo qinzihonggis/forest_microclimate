@@ -1,0 +1,104 @@
+﻿参数组,参数名,当前值,用途说明
+路径与阈值,project_dir,E:\forest_microclimate\ForestMicroclimate,输入输出路径或全局阈值。
+路径与阈值,output_dir,E:\forest_microclimate\ForestMicroclimate\results\论文主图\Fig1_现象图,输入输出路径或全局阈值。
+路径与阈值,extreme_spi_threshold,-2.0,极端干旱阈值；SPI30d <= 该值被视为 extreme drought。
+路径与阈值,figure_dpi,600,PNG 输出分辨率；投稿图建议 600 dpi。
+图形参数,fig_width,12.2,组合图宽度，单位英寸。
+图形参数,fig_height,9.8,组合图高度，单位英寸。
+图形参数,grid_left,0.06,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,grid_right,0.94,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,grid_bottom,0.1,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,grid_top,0.94,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,grid_wspace,0.22,左右面板水平间距；增大可减少面板拥挤。
+图形参数,grid_hspace,0.38,上下两行面板间距；增大可避免色标和标题重叠。
+图形参数,suptitle_y,0.982,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,axes_linewidth,0.8,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,axis_label_size,9,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,title_size,10,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,tick_label_size,8,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,legend_font_size,8,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,suptitle_size,11,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,map_facecolor_a,#f7f4ec,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,map_facecolor_c,#f7f7f7,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,map_edgecolor,#404040,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,map_edgewidth,0.8,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,map_padding_fraction,0.06,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_zero_site_size,18,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_zero_site_color,#b8b8b8,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_event_size_min,35,Fig.1A 极端事件站点最小点面积。
+图形参数,panel_a_event_size_max,115,Fig.1A 极端事件站点最大点面积。
+图形参数,panel_a_event_cmap,OrRd,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_event_edgecolor,#3a1f12,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_event_linewidth,0.45,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_event_alpha,0.92,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_legend_loc,upper left,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_legend_anchor_x,0.01,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_legend_anchor_y,0.98,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_inset_x,0.52,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_inset_y,0.06,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_inset_width,0.44,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_inset_height,0.25,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_inset_title_size,6,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_inset_label_size,6,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_inset_tick_size,5,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_timeline_fill_color,#d95f02,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_timeline_fill_alpha,0.26,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_timeline_line_color,#9d2f14,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_a_timeline_linewidth,1.1,Fig.1A 插图中每日极端干旱站点比例折线宽度。
+图形参数,panel_a_timeline_month_interval,2,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,delta_cmap,RdBu_r,Fig.1B/C ΔCBI 发散色带；当前红色为增加、蓝色为降低。
+图形参数,delta_limit_padding,1.15,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_b_point_size_min,35,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_b_point_size_max,110,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_b_point_alpha,0.86,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_b_point_edgecolor,#252525,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_b_point_linewidth,0.45,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_b_identity_line_color,#606060,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_b_identity_linewidth,0.9,Fig.1B y=x 参考线宽度。
+图形参数,panel_b_identity_linestyle,--,Fig.1B y=x 参考线线型。
+图形参数,panel_b_axis_padding_fraction,0.12,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_b_hist_bins,8,Fig.1B 插图 Delta_CBI 直方图分箱数量。
+图形参数,panel_b_hist_color,#6f6f6f,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_b_hist_alpha,0.85,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_b_hist_zero_line_color,#222222,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_b_hist_zero_linewidth,0.8,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_c_background_site_size,15,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_c_background_site_color,#c7c7c7,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_c_response_size_min,45,Fig.1C 有效配对站点最小点面积。
+图形参数,panel_c_response_size_max,145,Fig.1C 有效配对站点最大点面积。
+图形参数,panel_c_response_edgecolor,#1f1f1f,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_c_response_linewidth,0.45,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_c_response_alpha,0.93,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_c_legend_loc,lower right,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_c_legend_anchor_x,0.99,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_c_legend_anchor_y,0.01,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_spi_cmap,YlOrBr_r,Fig.1D 事件点按最低 SPI30d 着色的色带。
+图形参数,panel_d_event_point_size,30,Fig.1D 单个事件点大小。
+图形参数,panel_d_event_point_alpha,0.78,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_event_edgecolor,white,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_event_linewidth,0.35,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_site_median_marker,D,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_site_median_size,45,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_site_median_facecolor,white,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_site_median_edgecolor,#111111,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_site_median_linewidth,0.9,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_zero_line_color,#333333,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_zero_linewidth,0.85,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_zero_linestyle,--,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_row_line_color,#e5e5e5,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_row_linewidth,0.45,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_jitter_half_width,0.16,Fig.1D 同站点事件点的上下抖动半宽，避免点完全重叠。
+图形参数,panel_d_jitter_seed,20250720,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_n_label_fontsize,7,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_n_label_offset_fraction,0.018,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,panel_d_site_label_size,6,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,delta_colorbar_x,0.04,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,delta_colorbar_y,0.88,Fig.1B/C ΔCBI 色标相对位置 y；负值表示放在面板下方。
+图形参数,delta_colorbar_width,0.3,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,delta_colorbar_height,0.035,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,spi_colorbar_x,0.04,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,spi_colorbar_y,0.9,Fig.1D SPI 色标相对位置 y；负值表示放在面板下方。
+图形参数,spi_colorbar_width,0.3,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,spi_colorbar_height,0.035,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,colorbar_tick_size,7,控制图例、线条、点大小、颜色、字体或版式。
+图形参数,colorbar_label_size,7,控制图例、线条、点大小、颜色、字体或版式。
