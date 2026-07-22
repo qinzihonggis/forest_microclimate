@@ -1,0 +1,5 @@
+﻿MIN_STATUS_HOURS_PER_SITE_MONTH,retained_site_months,retained_sites,retained_hourly_records,retained_extreme_hours,retained_normal_hours
+24,33,20,11400,2928,8472
+48,21,15,8136,2640,5496
+72,16,13,6384,2400,3984
+120,11,9,4704,1992,2712

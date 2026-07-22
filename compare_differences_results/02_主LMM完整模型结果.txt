@@ -1,0 +1,24 @@
+                    Mixed Linear Model Regression Results
+=============================================================================
+Model:                 MixedLM      Dependent Variable:      Observed_T15cm_C
+No. Observations:      6384         Method:                  REML            
+No. Groups:            13           Scale:                   2.1467          
+Min. group size:       192          Log-Likelihood:          -11566.2061     
+Max. group size:       1008         Converged:               Yes             
+Mean group size:       491.1                                                 
+-----------------------------------------------------------------------------
+                                  Coef.  Std.Err.    z    P>|z| [0.025 0.975]
+-----------------------------------------------------------------------------
+Intercept                         19.466    1.196  16.280 0.000 17.122 21.809
+C(Month_Factor)[T.8]               5.394    1.883   2.864 0.004  1.703  9.085
+C(Month_Factor)[T.9]               4.810    1.788   2.690 0.007  1.306  8.314
+Macro_Within                       0.834    0.086   9.674 0.000  0.665  1.003
+Macro_Within:C(Month_Factor)[T.8] -0.207    0.110  -1.878 0.060 -0.423  0.009
+Macro_Within:C(Month_Factor)[T.9] -0.220    0.110  -1.995 0.046 -0.436 -0.004
+Is_Extreme                        -0.569    0.039 -14.644 0.000 -0.645 -0.493
+Macro_Within:Is_Extreme            0.033    0.010   3.298 0.001  0.014  0.053
+Macro_Mean_SiteMonth_C             0.308    0.228   1.349 0.177 -0.139  0.754
+Group Var                          0.883    0.261                            
+Group x Macro_Within Cov           0.145    0.048                            
+Macro_Within Var                   0.037    0.011                            
+=============================================================================

@@ -1,0 +1,134 @@
+
+极端干旱 vs 未发生极端干旱的微气候缓冲能力分析
+运行审计报告
+===============================================================================
+
+一、输入数据
+-------------------------------------------------------------------------------
+逐小时温度表: E:\forest_microclimate\ForestMicroclimate\results\时间序列图\逐小时温度对齐表.csv
+逐日SPI宽表: E:\forest_microclimate\ForestMicroclimate\results\daily_SPI_result\各站点SPI30d逐日宽表_2025.xlsx
+干旱事件长表: E:\forest_microclimate\ForestMicroclimate\results\daily_SPI_features\福建省观测站2025年daily_SPI干旱事件长表.csv
+建议Python环境目录: D:\ProgramData\anaconda3\envs\gee
+建议Python解释器: D:\ProgramData\anaconda3\envs\gee\python.exe
+绘图中文字体: Microsoft YaHei
+分析日期字段: Time_UTC
+分析日期体系: UTC_Date = Time_UTC 的日期部分；不提供任何非UTC日期备用入口。
+
+二、质量控制
+-------------------------------------------------------------------------------
+CSV原始逐小时记录: 223,992
+UTC时间解析有效记录: 223,992
+温度质量控制后记录: 223,992
+去除完全重复后记录: 223,992
+最终小时记录: 223,992
+温度站点数量: 27
+Time_UTC解析率: 100.0000%
+Time_UTC解析失败记录数: 0
+SPI匹配率: 100.00%
+UTC日期范围: 2025-01-20 至 2025-12-31
+
+三、SPI分类规则
+-------------------------------------------------------------------------------
+Extreme: SPI30d <= -2.0
+Normal: -0.5 < SPI30d < 0.5
+Other: 其他全部SPI状态（不进入主LMM；包括轻/中/重度干旱和轻/中/严重/极端湿润）
+
+四、主LMM样本
+-------------------------------------------------------------------------------
+Extreme + Normal候选小时: 98,216
+进入主LMM小时: 6,384
+进入主LMM站点: 13
+进入主LMM站点-月份层: 16
+主LMM状态小时门槛: Extreme >= 72 且 Normal >= 72
+Macro_Within定义: 当前小时ERA5 - 该站点该UTC月份全部有效小时ERA5均值。
+状态小时门槛敏感性审计: 01_状态小时门槛敏感性审计表.csv
+站点-月份宏气候背景审计: 01_站点月份状态小时数与宏气候背景审计表.csv
+
+主模型公式：
+Observed_T15cm_C ~ Macro_Within * Is_Extreme + C(Month_Factor) + Macro_Within:C(Month_Factor) + Macro_Mean_SiteMonth_C
+
+随机效应结构：
+随机截距 + Macro_Within随机斜率，分组为Site_ID。
+
+主结果：
+Macro × Extreme交互项（Delta_CBI）: 0.033289
+95% CI: [0.013507, 0.053071]
+p值: 0.000973181
+样本加权Normal CBI: 0.700201
+样本加权Extreme CBI: 0.733490
+
+解释：
+Delta_CBI > 0 表示Extreme期间CBI更高，即微气候缓冲减弱；
+Delta_CBI < 0 表示Extreme期间CBI更低，即表观缓冲增强。
+
+五、站点-月份CBI描述性补充图
+-------------------------------------------------------------------------------
+计算单元: Site_ID × YearMonth × SPI_Status
+CBI估计方法: 每个单元内用逐小时数据拟合 OLS:
+Observed_T15cm_C = Intercept + CBI × ERA5_T2m_C
+
+站点前置筛选:
+- 仅保留全年至少出现过1个Extreme小时的站点；
+- 全年无Extreme小时的站点不贡献Normal CBI；
+- 目的：避免没有极端干旱背景的站点膨胀Normal样本量。
+
+候选站点数: 27
+全年有Extreme站点数: 20
+全年无Extreme而被排除站点数: 7
+
+筛选规则:
+- SPI_Status仅使用Normal与Extreme；
+- 每个站点-月份-状态至少72个有效小时；
+- 每个站点-月份-状态ERA5温度标准差至少1.0°C；
+- 03B配对箱线图和03C配对变化图仅使用同一Site_ID × YearMonth同时具有合格Normal和Extreme CBI的单元；
+- 03D研究区总体箱线图使用全部合格站点-月份-状态CBI，属于非配对总体分布图。
+
+说明:
+这些图用于展示站点-月份层面的CBI分布、总体趋势和配对方向，
+属于描述性补充结果，不替代主LMM显著性检验。
+
+输出文件:
+全年极端干旱站点筛选审计表: 03_全年极端干旱站点筛选审计表.csv
+站点月份状态CBI估计表: 03_站点月份状态CBI估计表.csv
+站点月份CBI配对变化审计表: 03_站点月份CBI配对变化审计表.csv
+站点月份CBI配对变化汇总表: 03_站点月份CBI配对变化汇总表.csv
+极端事件是否进入站点月份CBI配对审计表: 03_极端事件是否进入站点月份CBI配对审计表.csv
+研究区总体CBI分布汇总表: 03_研究区总体CBI分布汇总表.csv
+主LMM单图: 03A_主LMM正常与极端预测线图.png
+配对样本站点月份CBI箱线散点图: 03B_站点月份CBI箱线散点图.png
+站点月份CBI配对变化图: 03C_站点月份CBI配对变化图.png
+研究区总体CBI箱线图（非配对）: 03D_研究区总体CBI箱线图.png
+主LMM与站点月份CBI综合图: 03_主LMM与站点月份CBI综合图.png
+
+站点月份配对汇总:
+ n_pairs  n_positive_delta  n_negative_delta  n_near_zero_delta  positive_percent  negative_percent  near_zero_percent  median_CBI_Normal  median_CBI_Extreme  median_Delta_CBI  mean_Delta_CBI
+      16                 9                 4                  3            0.5625              0.25             0.1875           0.728204            0.785869          0.022655        0.033683
+
+六、事件级辅助分析
+-------------------------------------------------------------------------------
+极端事件总数: 27
+有可靠Event-CBI与Reference-CBI配对的事件数:
+27
+
+参考期规则：
+- 事件结束后第1天作为缓冲日，不使用；
+- 从结束后第2天起；
+- 最多搜索30个自然日；
+- 仅选择Normal SPI日；
+- 单个参考候选日需至少18个有效小时；
+- 目标日数 = min(Event Duration, 30)；
+- 找不到目标日数时，仅使用30日搜索窗口内实际找到的合格Normal日；
+- 参考期至少72小时才计算可靠CBI；
+- 不足时保留事件与审计记录，但不用于正式Delta_CBI配对检验。
+未进入配对检验原因审计: 04_未进入事件CBI配对检验原因审计表.csv
+候选日期级审计: 04_事件后参考期候选日期审计表.csv
+
+事件级站点聚类bootstrap结果：
+ observed_mean_delta_cbi  ci_low_95  ci_high_95  p_two_sided  n_sites  n_events flag
+                0.057114   0.018815    0.093943        0.005       20        27   ok
+
+七、月度描述性阈值
+-------------------------------------------------------------------------------
+Extreme_Ratio >= 0.3
+说明：该阈值仅标记“极端状态占比较高的月份”，不表示统计显著，
+月度分析不作为本研究主显著性结论。

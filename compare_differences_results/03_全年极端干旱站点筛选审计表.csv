@@ -1,0 +1,28 @@
+﻿Site_ID,n_extreme_hours,n_normal_hours,n_site_months,Site_Has_Extreme_In_Year,Included_In_SiteMonth_CBI_Figures,Exclusion_Reason
+95332217,240,3144,11,True,True,
+95332218,24,3664,11,True,True,
+95332219,96,3744,11,True,True,
+95332220,192,4624,11,True,True,
+95332221,72,3624,11,True,True,
+95332222,0,3312,11,False,False,全年无Extreme小时，Normal CBI不进入Normal-vs-Extreme比较图
+95332223,0,3552,11,False,False,全年无Extreme小时，Normal CBI不进入Normal-vs-Extreme比较图
+95332224,0,3768,11,False,False,全年无Extreme小时，Normal CBI不进入Normal-vs-Extreme比较图
+95332225,120,3384,11,True,True,
+95332226,96,2904,9,True,True,
+95332227,264,3096,11,True,True,
+95332228,312,3720,11,True,True,
+95332229,72,3264,11,True,True,
+95332230,288,3696,11,True,True,
+95332231,96,3168,11,True,True,
+95332232,0,3288,11,False,False,全年无Extreme小时，Normal CBI不进入Normal-vs-Extreme比较图
+95332233,24,3816,11,True,True,
+95332234,0,3456,12,False,False,全年无Extreme小时，Normal CBI不进入Normal-vs-Extreme比较图
+95332235,264,4392,11,True,True,
+95332236,288,3864,11,True,True,
+95332237,0,3576,11,False,False,全年无Extreme小时，Normal CBI不进入Normal-vs-Extreme比较图
+95332238,24,4080,11,True,True,
+95332239,24,3456,11,True,True,
+95332240,0,3216,10,False,False,全年无Extreme小时，Normal CBI不进入Normal-vs-Extreme比较图
+95332242,72,2544,10,True,True,
+95332243,48,3408,11,True,True,
+95332244,336,3504,11,True,True,

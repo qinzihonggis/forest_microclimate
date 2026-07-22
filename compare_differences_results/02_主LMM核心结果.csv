@@ -1,0 +1,2 @@
+﻿interaction_term,Delta_CBI_Extreme_minus_Normal,Delta_CBI_CI_low_95,Delta_CBI_CI_high_95,Delta_CBI_p_value,weighted_CBI_Normal,weighted_CBI_Extreme,n_hourly_records_LMM,n_sites_LMM,n_site_months_LMM,formula
+Macro_Within:Is_Extreme,0.033288902415292865,0.013506689378142797,0.05307111545244293,0.0009731810264060805,0.7002010807415744,0.7334899831568673,6384,13,16,Observed_T15cm_C ~ Macro_Within * Is_Extreme + C(Month_Factor) + Macro_Within:C(Month_Factor) + Macro_Mean_SiteMonth_C

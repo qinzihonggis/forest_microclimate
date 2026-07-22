@@ -1,0 +1,2 @@
+﻿n_pairs,n_positive_delta,n_negative_delta,n_near_zero_delta,positive_percent,negative_percent,near_zero_percent,median_CBI_Normal,median_CBI_Extreme,median_Delta_CBI,mean_Delta_CBI
+16,9,4,3,0.5625,0.25,0.1875,0.7282036933434433,0.7858694577622303,0.022655474265438652,0.033682698583841666
