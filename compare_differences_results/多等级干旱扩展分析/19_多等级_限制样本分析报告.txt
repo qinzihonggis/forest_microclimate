@@ -1,0 +1,29 @@
+
+多等级共同支持域限制样本LMM报告
+===============================================================================
+
+一、模块定位
+-------------------------------------------------------------------------------
+本模块只限制共同月份和共同站点，不限制温度背景overlap。
+所有模型仍为“目标等级 vs Normal”的同构LMM，用于检查Mild偏高和Extreme最大是否在更可比支持域内稳定。
+该结果不替代05号主扩展LMM，也不是新的主结论。
+
+二、限制版本
+-------------------------------------------------------------------------------
+Pairwise_common_month_site:
+    Mild分别与Moderate、Severe、Extreme的共同月份+共同站点。
+
+All_class_common_month_site:
+    Mild、Moderate、Severe、Extreme四等级共同月份+共同站点。
+
+三、结果摘要
+-------------------------------------------------------------------------------
+- All_class_common_month_site | All_selected_classes: Mild=0.0588(change=0.0338); Moderate=0.0184(change=0.0076); Severe=0.0401(change=0.0271); Extreme=0.0591(change=0.0258)
+- Pairwise_common_month_site | Mild_vs_Extreme: Mild=0.0461(change=0.0211); Extreme=0.0333(change=0.0000)
+- Pairwise_common_month_site | Mild_vs_Moderate: Mild=0.0350(change=0.0100); Moderate=0.0108(change=0.0000)
+- Pairwise_common_month_site | Mild_vs_Severe: Mild=0.0306(change=0.0056); Severe=0.0130(change=0.0000)
+
+四、解释边界
+-------------------------------------------------------------------------------
+若限制后Mild的Delta_CBI明显下降，说明原Mild偏高可能与月份或站点支持域差异有关。
+若限制后Mild仍高于Moderate/Severe，则非单调形态更值得进一步检查温度背景overlap或正式等级模型。

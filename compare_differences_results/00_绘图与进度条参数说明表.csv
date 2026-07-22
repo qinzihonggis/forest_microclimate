@@ -1,0 +1,52 @@
+﻿参数名,当前值,用途
+CHINESE_FONT_CANDIDATES,Microsoft YaHei | SimHei | SimSun | KaiTi | FangSong | Noto Sans CJK SC | Source Han Sans SC,图片中文字体候选列表，按顺序自动选择已安装字体
+SELECTED_CHINESE_FONT,Microsoft YaHei,本次绘图实际使用的中文字体
+FIG_DPI,300,所有图片输出分辨率
+FIG_MAIN_PREDICT_SIZE,"(9, 6)",主LMM预测线图尺寸
+FIG_SITE_MONTH_CBI_BOX_SIZE,"(8, 6)",站点月份CBI箱线散点图尺寸
+FIG_SITE_MONTH_CBI_PAIR_SIZE,"(8, 6)",站点月份CBI配对变化图尺寸
+FIG_REGIONAL_CBI_BOX_SIZE,"(8, 6)",研究区总体CBI箱线图尺寸
+FIG_MAIN_CBI_COMPOSITE_SIZE,"(18, 6)",主LMM与站点月份CBI综合图尺寸
+FIG_EVENT_PAIR_SIZE,"(10, 7)",事件CBI配对图尺寸
+FIG_MONTHLY_TRAJECTORY_SIZE,"(10, 6)",月度CBI季节轨迹图尺寸
+FIG_BOTTOM_NOTE_Y,0.02,图底部说明文字的纵向位置
+COLOR_NORMAL,#2C7FB8,Normal状态线条/点颜色
+COLOR_EXTREME,#D7301F,Extreme状态线条/点颜色
+COLOR_MONTHLY_MEDIAN,#1B7837,月度CBI中位数线颜色
+COLOR_HIGHLIGHT_TEXT,#B2182B,重点站点编号或说明文字高亮颜色
+LINEWIDTH_MAIN_PREDICT,3,主预测线线宽
+LINEWIDTH_EVENT_PAIR,1.4,事件配对连线线宽
+LINEWIDTH_MONTHLY_MEDIAN,3,月度中位数线宽
+LINEWIDTH_CBI_PAIR,1.0,站点月份CBI配对细线线宽
+LINEWIDTH_CBI_MEDIAN_PAIR,3.0,站点月份CBI配对中位数粗线线宽
+ALPHA_EVENT_PAIR,0.65,事件配对连线透明度
+ALPHA_SCATTER,0.6,事件配对散点透明度
+ALPHA_EVENT_DELTA_SCATTER,0.85,事件Delta散点透明度
+ALPHA_CBI_POINTS,0.65,站点月份CBI散点透明度
+ALPHA_CBI_PAIR_LINES,0.45,站点月份CBI配对线透明度
+ALPHA_MONTHLY_SITE,0.25,站点月度轨迹线透明度
+ALPHA_MONTHLY_IQR,0.18,月度IQR阴影透明度
+SCATTER_SIZE_EVENT,5,事件配对散点大小
+SCATTER_SIZE_DELTA,50,事件Delta散点大小
+SCATTER_SIZE_CBI,45,站点月份CBI散点大小
+MARKER_MONTHLY_MEDIAN,o,月度中位数线标记样式
+LEGEND_LOCATION_BEST,best,图例位置参数
+ANNOTATION_FONTSIZE,9,图内解释文字和重点站点编号的字体大小
+TICKLABEL_FONTSIZE_EVENT_DELTA,8,事件Delta点图纵轴标签字号
+JITTER_WIDTH_CBI_BOX,0.08,CBI箱线图散点左右抖动宽度
+MIN_SITE_MONTH_STATUS_CBI_HOURS,72,站点月份状态CBI估计的最低有效小时数
+MIN_SITE_MONTH_STATUS_MACRO_SD,1.0,站点月份状态CBI估计的最低ERA5温度标准差
+NEAR_ZERO_DELTA_CBI,0.01,配对变化中定义基本不变的Delta_CBI阈值
+PYTHON_ENV_DIR,D:\ProgramData\anaconda3\envs\gee,建议运行脚本的Python环境目录
+PYTHON_INTERPRETER,D:\ProgramData\anaconda3\envs\gee\python.exe,建议运行脚本的Python解释器路径
+进度条颜色_读取与审计,cyan,tqdm终端单行动态进度条颜色
+进度条颜色_样本筛选,green,tqdm终端单行动态进度条颜色
+进度条颜色_模型预测,blue,tqdm终端单行动态进度条颜色
+进度条颜色_事件分析,magenta,tqdm终端单行动态进度条颜色
+进度条颜色_Bootstrap,yellow,tqdm终端单行动态进度条颜色
+进度条颜色_绘图,red,tqdm终端单行动态进度条颜色
+进度条颜色_月度分析,white,tqdm终端单行动态进度条颜色
+进度条颜色_模型拟合,blue,tqdm终端单行动态进度条颜色
+进度条颜色_报告输出,green,tqdm终端单行动态进度条颜色
+进度条颜色_站点月份CBI,yellow,tqdm终端单行动态进度条颜色
+进度条颜色_清理缓存,cyan,tqdm终端单行动态进度条颜色

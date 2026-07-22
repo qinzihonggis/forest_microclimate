@@ -1,0 +1,48 @@
+
+SPI多等级干旱扩展分析配置说明
+===============================================================================
+
+一、模块定位
+-------------------------------------------------------------------------------
+本模块为“干旱强度梯度扩展分析”，不替代、不覆盖原Extreme vs Normal主分析。
+原主分析对象SPI_Status、Is_Extreme、df_lmm_all、df_lmm、main_lmm_result均保持不变。
+
+二、本次运行开关
+-------------------------------------------------------------------------------
+RUN_MULTI_LEVEL_MODULE = True
+RUN_MULTI_LEVEL_LMM = True
+RUN_MULTI_LEVEL_MACRO_SD_SENSITIVITY = True
+RUN_MULTI_LEVEL_RESTRICTED_SUPPORT_LMM = True
+MULTI_LEVEL_MODEL_CLASSES_TO_RUN = ['Mild', 'Moderate', 'Severe', 'Extreme']
+
+三、SPI常见分级边界
+-------------------------------------------------------------------------------
+Normal   : -0.5 < SPI < 0.5
+Mild drought     : -1.0 < SPI <= -0.5
+Moderate drought : -1.5 < SPI <= -1.0
+Severe drought   : -2.0 < SPI <= -1.5
+Extreme drought  : SPI <= -2.0
+Mild wet         : 0.5 <= SPI < 1.0
+Moderate wet     : 1.0 <= SPI < 1.5
+Severe wet       : 1.5 <= SPI < 2.0
+Extreme wet      : SPI >= 2.0
+
+当前LMM只使用Normal与干旱等级；湿润等级仅进入SPI_Full_Class完整分级审计。
+
+四、模型门槛
+-------------------------------------------------------------------------------
+主扩展模型：Target >= 72小时 且 Normal >= 72小时。
+MacroSD敏感性模型：在主扩展模型配对资格基础上，额外要求Target和Normal状态内ERA5 SD均 >= 1.0 °C。
+正式LMM必须由MULTI_LEVEL_MODEL_CLASSES_TO_RUN人工指定等级，不会仅凭审计建议自动运行。
+
+五、本轮运行说明
+-------------------------------------------------------------------------------
+已查看04_多等级模型可运行性审计.csv，Mild、Moderate、Severe和Extreme均满足主扩展LMM运行条件。
+已查看05_多等级_LMM结果汇总.csv，四个等级主扩展LMM均成功拟合且Delta_CBI为正。
+本轮继续运行MacroSD敏感性模型，检查在Target与Normal状态内ERA5 SD均 >= 1.0 °C后，
+四等级Delta_CBI方向、量级和显著性是否保持稳定。
+敏感性结果仅用于稳健性判断，不替代05_多等级_LMM结果汇总.csv中的主扩展结果。
+本轮新增有序趋势检验：将Mild、Moderate、Severe、Extreme编码为1、2、3、4，
+在结果层面检验Delta_CBI是否随等级顺序整体升高；该检验不替代四个独立LMM。
+本轮新增限制样本LMM：仅限制共同月份和共同站点，不限制温度背景overlap；
+用于检查Mild偏高和Extreme最大是否在更可比的支持域内仍然存在。

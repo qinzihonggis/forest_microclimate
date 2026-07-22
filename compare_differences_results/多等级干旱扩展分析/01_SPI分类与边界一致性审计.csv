@@ -1,0 +1,9 @@
+﻿SPI30d_boundary_value,n_hours,Expected_Drought_Class,Observed_Drought_Classes,Drought_Class_boundary_match,Expected_SPI_Full_Class,Observed_SPI_Full_Classes,SPI_Full_Class_boundary_match,Normal_consistent_with_SPI_Status,Extreme_consistent_with_SPI_Status
+-2.0,0,Extreme,,True,ExtremeDrought,,True,True,True
+-1.5,0,Severe,,True,SevereDrought,,True,True,True
+-1.0,0,Moderate,,True,ModerateDrought,,True,True,True
+-0.5,0,Mild,,True,MildDrought,,True,True,True
+0.5,0,Other,,True,MildWet,,True,True,True
+1.0,0,Other,,True,ModerateWet,,True,True,True
+1.5,0,Other,,True,SevereWet,,True,True,True
+2.0,0,Other,,True,ExtremeWet,,True,True,True

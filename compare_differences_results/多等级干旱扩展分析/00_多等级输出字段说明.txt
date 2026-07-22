@@ -1,0 +1,536 @@
+
+SPI多等级干旱扩展分析输出字段说明
+===============================================================================
+
+说明
+-------------------------------------------------------------------------------
+本文件解释“多等级干旱扩展分析”子目录中各输出文件的表头含义。
+若需要了解每个文件回答什么科学问题、图表应该怎样解读，
+请查看00_多等级输出文件用途说明.txt。
+CanRunMixedLM_Suggested只是审计提示，不是自动建模许可。
+当前已查看04_多等级模型可运行性审计.csv，并将Mild、Moderate、Severe、Extreme
+四个等级手动写入MULTI_LEVEL_MODEL_CLASSES_TO_RUN以运行主扩展LMM。
+当前也已查看05_多等级_LMM结果汇总.csv；四个等级主扩展LMM均成功拟合且Delta_CBI为正，
+因此本轮打开RUN_MULTI_LEVEL_MACRO_SD_SENSITIVITY，继续运行MacroSD敏感性模型。
+本轮同时新增结果层面的有序趋势检验，用于辅助判断Delta_CBI是否随干旱等级顺序整体升高。
+
+一、00_多等级分析配置说明.txt
+-------------------------------------------------------------------------------
+RUN_MULTI_LEVEL_MODULE
+    是否启用多等级干旱扩展模块。
+
+RUN_MULTI_LEVEL_LMM
+    是否运行多等级主扩展LMM。当前为True，运行四个目标等级。
+
+RUN_MULTI_LEVEL_MACRO_SD_SENSITIVITY
+    是否运行MacroSD敏感性LMM。当前为True。
+    只有RUN_MULTI_LEVEL_LMM=True时才允许启用；敏感性结果用于稳健性检查，不替代主扩展结果。
+
+RUN_MULTI_LEVEL_RESTRICTED_SUPPORT_LMM
+    是否运行共同月份+共同站点限制样本LMM。当前为True。
+    该分支仍拟合“目标等级 vs Normal”的同构LMM，不直接拟合Mild vs其他等级。
+
+MULTI_LEVEL_MODEL_CLASSES_TO_RUN
+    研究者人工指定进入正式LMM的目标干旱等级列表。
+    当前为Mild、Moderate、Severe、Extreme四个等级。
+
+DROUGHT_CLASS_ORDINAL_SCORE
+    有序趋势检验使用的等级分数。
+    Mild=1、Moderate=2、Severe=3、Extreme=4。
+    该分数只表达等级顺序，不代表真实SPI距离完全等距。
+
+SPI常见分级边界
+    记录Normal、Mild、Moderate、Severe、Extreme以及湿润等级的SPI范围。
+    本模块采用常见SPI分级：极端干旱为SPI <= -2.0，
+    其他干旱等级使用左开右闭区间；Normal保持开区间。
+
+模型门槛
+    记录主扩展模型的小时数配对门槛和MacroSD敏感性模型的额外门槛。
+
+补充、00_多等级输出文件用途说明.txt
+-------------------------------------------------------------------------------
+解释每个输出文件的用途、对应研究问题、推荐阅读顺序和解释边界。
+该文件不解释表头细节；表头细节由当前字段说明文件负责。
+
+二、01_SPI分类与边界一致性审计.csv
+-------------------------------------------------------------------------------
+SPI30d_boundary_value
+    被检查的SPI边界值，包括-2.0、-1.5、-1.0、-0.5、0.5、1.0、1.5、2.0。
+
+n_hours
+    数据中SPI30d恰好等于该边界值的小时记录数。
+
+Expected_Drought_Class
+    该边界值在当前干旱扩展标签Drought_Class中应进入的等级。
+    例如-2.0应进入Extreme；0.5、1.0、1.5、2.0不进入干旱LMM，因此为Other。
+
+Observed_Drought_Classes
+    数据中该边界值实际出现的Drought_Class类别。
+
+Drought_Class_boundary_match
+    实际Drought_Class是否与Expected_Drought_Class一致。
+
+Expected_SPI_Full_Class
+    该边界值在完整SPI分级SPI_Full_Class中应进入的等级。
+    例如0.5应进入MildWet，2.0应进入ExtremeWet。
+
+Observed_SPI_Full_Classes
+    数据中该边界值实际出现的SPI_Full_Class类别。
+
+SPI_Full_Class_boundary_match
+    实际SPI_Full_Class是否与Expected_SPI_Full_Class一致。
+
+Normal_consistent_with_SPI_Status
+    Drought_Class == Normal 是否与主分析 SPI_Status == Normal 完全一致。
+    预期应为True。
+
+Extreme_consistent_with_SPI_Status
+    Drought_Class == Extreme 是否与主分析 SPI_Status == Extreme 完全一致。
+    预期应为True。
+
+三、01_SPI完整分级状态审计.csv
+-------------------------------------------------------------------------------
+SPI_Full_Class / SPI_Full_Class_CN
+    完整SPI分级及中文名，包括干旱、Normal和湿润等级。
+
+n_hours / n_sites / n_dates / n_year_months / n_month_factor_levels
+    该完整SPI等级覆盖的小时数、站点数、日期数、具体年月数和日历月份数。
+
+months_present / year_months_present
+    该完整SPI等级覆盖的日历月份和具体年月。
+
+mean_spi / min_spi / max_spi
+    该完整SPI等级内SPI30d的均值、最小值和最大值。
+
+用途
+    用于审计常见SPI完整分级覆盖情况；湿润等级不进入当前干旱vsNormal LMM。
+
+四、02_多等级状态审计.csv
+-------------------------------------------------------------------------------
+Drought_Class
+    SPI多等级状态：Normal、Mild、Moderate、Severe、Extreme或Other。
+
+n_hours
+    该状态在全体逐小时数据中的小时记录数。
+
+n_sites
+    该状态涉及的独立站点数。
+
+n_dates
+    该状态涉及的UTC日期数。
+
+n_year_months
+    该状态涉及的具体年月数量，例如2025-06、2025-07。
+
+n_month_factor_levels
+    该状态涉及的日历月份数量，例如6、7、8。
+    该字段用于判断月份/季节背景覆盖是否过窄。
+
+months_present
+    该状态覆盖的日历月份列表。
+
+year_months_present
+    该状态覆盖的具体年月列表。
+
+mean_spi
+    该状态内SPI30d平均值。
+
+min_spi
+    该状态内SPI30d最小值。
+
+max_spi
+    该状态内SPI30d最大值。
+
+五、03_各等级_SiteMonth_配对审计.csv
+-------------------------------------------------------------------------------
+Target_Class
+    当前与Normal配对比较的目标干旱等级。
+
+Target_Class_CN
+    目标干旱等级中文名。
+
+Site_Month
+    站点-月份配对单元，由Site_ID和YearMonth组成。
+    多等级比较要求目标等级和Normal在同一个Site_Month内进行配对。
+
+Site_ID
+    站点编号。
+
+YearMonth
+    具体年月，例如2025-07。
+
+Month
+    日历月份，取值1至12。
+
+n_all_valid_hours
+    该Site_Month内所有通过温度质量控制的有效小时数。
+
+Macro_Mean_SiteMonth_AllValid
+    该Site_Month内全部有效小时的ERA5温度均值。
+    后续Macro_Within使用该值作为中心化基准，不能按目标等级+Normal子集重算。
+
+Macro_SD_SiteMonth_AllValid
+    该Site_Month内全部有效小时的ERA5温度标准差。
+
+Target_n_hours
+    目标干旱等级在该Site_Month内的小时数。
+
+Normal_n_hours_for_pair
+    Normal在该Site_Month内的小时数。
+
+Target_Macro_SD
+    目标干旱等级状态内部ERA5温度标准差。
+
+Normal_Macro_SD_for_pair
+    Normal状态内部ERA5温度标准差。
+
+Pass_Hours
+    是否满足主扩展模型小时数配对门槛：
+    Target_n_hours >= 72 且
+    Normal_n_hours_for_pair >= 72。
+
+Pass_Target_Macro_SD
+    目标干旱等级状态内ERA5温度标准差是否 >= 1.0 °C。
+
+Pass_Normal_Macro_SD
+    Normal状态内ERA5温度标准差是否 >= 1.0 °C。
+
+Pass_Hours_Plus_Macro_SD
+    是否同时满足Pass_Hours、Pass_Target_Macro_SD和Pass_Normal_Macro_SD。
+    这是MacroSD敏感性模型的候选资格，不是主扩展模型的默认资格。
+
+六、04_多等级模型可运行性审计.csv
+-------------------------------------------------------------------------------
+Target_Class
+    当前目标干旱等级。
+
+Target_Class_CN
+    当前目标干旱等级中文名。
+
+n_SiteMonth_Pass_Hours
+    满足主扩展模型小时数配对门槛的Site_Month数量。
+    这是判断该等级能否进入主扩展LMM的核心样本量指标。
+
+n_SiteMonth_Pass_Hours_Plus_Macro_SD
+    在满足小时数配对门槛基础上，同时满足目标等级和Normal状态内MacroSD门槛的Site_Month数量。
+    这是MacroSD敏感性模型的候选样本量指标。
+
+n_sites
+    满足小时数配对门槛后涉及的独立站点数。
+    若只有1-2个站点，通常不适合作研究区总体MixedLM推断。
+
+n_site_months
+    满足小时数配对门槛后实际可用的Site_Month数量。
+
+n_year_months
+    满足小时数配对门槛后覆盖的具体年月数量。
+
+n_month_factor_levels
+    满足小时数配对门槛后覆盖的日历月份数量。
+    若只有1个月份，通常难以区分干旱效应与月份/季节背景。
+
+months_present
+    满足小时数配对门槛后覆盖的日历月份列表。
+
+year_months_present
+    满足小时数配对门槛后覆盖的具体年月列表。
+
+n_hours_Target
+    满足小时数配对门槛后，目标干旱等级小时总数。
+
+n_hours_Normal
+    满足小时数配对门槛后，与目标等级配对的Normal小时总数。
+
+CanRunMixedLM_Suggested
+    代码根据保护性门槛给出的可运行性建议。
+    该字段只表示“数学和最低样本结构上建议可尝试”，不是正式建模许可。
+
+Suggested_Reason
+    CanRunMixedLM_Suggested为False时的主要原因；ok表示通过建议门槛。
+
+Selected_By_USER_MODEL_CLASSES_TO_RUN
+    当前目标等级是否已被研究者写入MULTI_LEVEL_MODEL_CLASSES_TO_RUN。
+    当前四个等级均应为True。
+
+七、05_多等级_LMM结果汇总.csv
+-------------------------------------------------------------------------------
+仅当RUN_MULTI_LEVEL_LMM=True且至少一个等级成功拟合时生成。
+
+AnalysisVersion
+    分析版本。主扩展模型为Main_hours_only。
+
+Target_Class / Target_Class_CN
+    目标干旱等级及中文名。
+
+Interaction_Term
+    LMM中被提取为Delta_CBI的交互项名称。
+    通常为Macro_Within:Is_Target_Drought。
+
+DeltaCBI_Target_minus_Normal
+    目标干旱等级相对Normal的CBI变化量。
+    大于0表示相对Normal缓冲减弱；小于0表示表观缓冲增强。
+
+DeltaCBI_CI_low_95 / DeltaCBI_CI_high_95
+    Delta_CBI的95%置信区间上下限。
+
+DeltaCBI_p_raw
+    Delta_CBI交互项的原始p值。
+
+DeltaCBI_p_FDR
+    对成功拟合等级的原始p值进行Benjamini-Hochberg校正后的FDR q值。
+
+DeltaCBI_FDR_significant_0p05
+    FDR q值是否小于0.05。
+
+BaseCBI_Normal_reference_month
+    参考月份下Normal状态的Macro_Within主斜率。
+    因模型包含月份斜率调整，该值不是所有月份的总体平均CBI。
+
+n_sites / n_site_months / n_year_months / n_month_factor_levels
+    成功拟合模型使用的站点数、Site_Month数、具体年月数和日历月份数。
+
+months_present / year_months_present
+    成功拟合模型覆盖的月份和具体年月。
+
+n_hours_target / n_hours_normal
+    成功拟合模型使用的目标等级小时数和Normal小时数。
+
+Formula
+    实际拟合的LMM公式。
+
+Converged
+    statsmodels返回的模型收敛状态。
+
+八、08_多等级_MacroSD敏感性_结果汇总.csv
+-------------------------------------------------------------------------------
+仅当RUN_MULTI_LEVEL_MACRO_SD_SENSITIVITY=True且至少一个敏感性模型成功拟合时生成。
+字段含义与05_多等级_LMM结果汇总.csv基本相同。
+
+AnalysisVersion
+    敏感性模型标记为Sensitivity_hours_plus_MacroSD。
+
+解释重点
+    与主扩展模型比较Delta_CBI方向、置信区间、样本数是否明显变化。
+    该结果用于稳健性检查，不替代主扩展模型。
+
+九、09_多等级_DeltaCBI有序趋势检验.csv
+-------------------------------------------------------------------------------
+在结果层面进行有序趋势检验，仅当至少3个等级成功拟合时生成可解释结果。
+
+AnalysisVersion
+    趋势检验所基于的结果版本，例如Main_hours_only或Sensitivity_hours_plus_MacroSD。
+
+Trend_Method
+    趋势检验方法。
+    Weighted_linear_trend表示以Delta_CBI为响应、等级分数为解释变量，
+    并用Delta_CBI标准误的倒数平方作为权重进行加权线性趋势检验。
+    Spearman_rank_trend表示等级分数与Delta_CBI点估计的Spearman秩相关。
+
+n_classes
+    参与趋势检验的干旱等级数量。
+
+Classes_Used
+    参与趋势检验的等级列表。
+
+Ordinal_Scores
+    参与趋势检验的等级顺序分数。
+
+Slope_per_Ordinal_Level
+    加权线性趋势中，干旱等级每升高一级对应的Delta_CBI平均变化。
+    大于0表示结果层面支持Delta_CBI随等级整体升高。
+
+Slope_SE / Slope_CI_low_95 / Slope_CI_high_95 / Slope_p
+    加权线性趋势斜率的标准误、95% CI和p值。
+
+Spearman_rho / Spearman_p
+    等级分数与Delta_CBI点估计的Spearman秩相关及其p值。
+    由于只有4个等级，该p值主要作为描述性辅助，不应单独作为最终结论。
+
+Strictly_Increasing_DeltaCBI
+    Delta_CBI点估计是否从Mild到Extreme严格递增。
+    若为False，不能声称严格单调剂量响应。
+
+Interpretation
+    代码根据趋势斜率、CI、p值和是否严格递增给出的简要解释。
+
+十、06_多等级_LMM模型摘要.txt与08_多等级_MacroSD敏感性_模型摘要.txt
+-------------------------------------------------------------------------------
+保存每个成功拟合LMM的statsmodels完整文本摘要。
+用于检查固定效应、随机效应、方差成分、收敛状态和异常估计。
+
+十一、07_多等级_DeltaCBI森林图.png
+-------------------------------------------------------------------------------
+多等级Delta_CBI森林图。
+只显示成功拟合的等级；未进入模型的等级保留在审计表中，
+不应解释为“无效应”。
+
+十二、10_多等级扩展分析报告.txt
+-------------------------------------------------------------------------------
+多等级扩展模块本次运行的简要报告。
+记录本次开关状态、已输出文件和解释限制。
+
+十三、11_多等级_月份组成诊断.csv
+-------------------------------------------------------------------------------
+月份组成诊断表，用于检查Mild、Moderate、Severe、Extreme是否分布在不同月份。
+
+Drought_Class / Drought_Class_CN
+    干旱等级及中文名。
+
+Month
+    日历月份。
+
+n_hours / n_sites / n_site_months
+    该等级在该月份进入多等级主扩展LMM资格样本的小时数、站点数和Site_Month数。
+
+within_class_hour_share
+    该月份小时数占该等级总小时数的比例。
+    值越高，说明该等级越集中在该月份。
+
+site_hour_HHI_in_month
+    该等级该月份内站点小时贡献的HHI集中度。
+    越接近1说明越由少数站点主导。
+
+top1_site_hour_share_in_month
+    该等级该月份中贡献最多站点的小时占比。
+
+mean_spi / macro_mean_hourly / macro_sd_hourly
+    该等级该月份的SPI均值、ERA5小时均温和ERA5小时标准差。
+
+十四、12_多等级_站点贡献诊断.csv
+-------------------------------------------------------------------------------
+站点贡献诊断表，用于检查某一等级是否由少数站点主导。
+
+site_rank_by_hours
+    在该等级内按小时贡献从高到低排序的站点排名。
+
+n_hours / hour_share_within_class / cumulative_hour_share
+    该站点在该等级中的小时数、小时占比和累计小时占比。
+
+n_site_months / site_month_share_within_class
+    该站点贡献的Site_Month数及其占该等级总Site_Month数的比例。
+
+class_hour_HHI
+    该等级站点小时贡献的HHI集中度。
+
+effective_n_sites_by_hours
+    根据HHI换算的有效站点数，数值越小表示贡献越集中。
+
+top1_site_hour_share / top3_site_hour_share / top5_site_hour_share
+    该等级Top 1、Top 3、Top 5站点的累计小时贡献比例。
+
+十五、13_多等级_环境背景分布诊断.csv
+-------------------------------------------------------------------------------
+环境背景分布诊断表，用于比较各等级的宏气候背景和小时尺度温度偏差范围。
+
+Variable
+    被诊断的变量，例如Macro_Mean_SiteMonth_AllValid、Macro_SD_SiteMonth_AllValid、
+    Target_Macro_Range、Macro_Within、ERA5_T2m_C、Observed_T15cm_C、SPI30d。
+
+Scale
+    SiteMonth表示站点-月份尺度；Hourly表示小时尺度。
+
+n / mean / sd / p05 / p25 / median / p75 / p95 / min / max
+    该变量在对应等级中的样本数、均值、标准差、分位数和极值。
+    MacroWithin重点看IQR和5-95%范围，而不是只看均值。
+
+十六、14_多等级_common_support诊断.csv
+-------------------------------------------------------------------------------
+共同支持域诊断表，用于判断等级间是否具有足够共同月份、共同站点和共同温度背景。
+
+Comparison
+    比较对象，例如Mild_vs_Moderate、Mild_vs_Severe、Mild_vs_Extreme、
+    All_selected_classes。
+
+Support_Level
+    pairwise_common_support表示配对共同支持域；
+    all_selected_classes_common_support表示四等级共同支持域。
+
+Common_Months / n_Common_Months
+    各等级共同覆盖的月份清单及数量。
+
+Common_Sites / n_Common_Sites
+    各等级共同覆盖的站点清单及数量。
+
+n_SiteMonth_original
+    该等级原始进入主扩展LMM资格的Site_Month数。
+
+n_SiteMonth_in_Common_Months
+    只限制共同月份后，该等级保留的Site_Month数。
+
+n_SiteMonth_in_Common_Sites
+    只限制共同站点后，该等级保留的Site_Month数。
+
+n_SiteMonth_in_Common_Months_and_Sites
+    同时限制共同月份和共同站点后，该等级保留的Site_Month数。
+
+n_hours_after_common_months_sites
+    同时限制共同月份和共同站点后，该等级保留的小时数。
+
+MacroMean_p05_after_common_months_sites / MacroMean_p95_after_common_months_sites
+    共同月份和共同站点限制后，该等级Site_Month ERA5均温的5%和95%分位数。
+
+MacroSD_p05_after_common_months_sites / MacroSD_p95_after_common_months_sites
+    共同月份和共同站点限制后，该等级Site_Month ERA5 SD的5%和95%分位数。
+
+MacroWithin_p05_after_common_months_sites / MacroWithin_p95_after_common_months_sites
+    共同月份和共同站点限制后，该等级小时尺度MacroWithin的5%和95%分位数。
+
+Enough_For_Restricted_Analysis_Suggested
+    是否根据保护性门槛建议可做限制样本描述分析。
+    这不是自动建模许可。
+
+Restriction_Diagnosis
+    对共同支持域是否充足的简要诊断。
+
+十七、15_多等级非单调性诊断报告.txt
+-------------------------------------------------------------------------------
+非单调性诊断报告，汇总月份集中性、站点贡献集中性和共同支持域结果。
+该报告只用于解释样本可比性，不提供新的显著性结论。
+
+十八、16_多等级_限制样本LMM结果汇总.csv
+-------------------------------------------------------------------------------
+限制样本LMM结果汇总。该分析只限制共同月份和共同站点，不限制温度背景overlap。
+目的不是替代主扩展模型，而是检查非单调排序在更可比样本内是否稳定。
+
+RestrictionVersion
+    限制样本版本。
+    Pairwise_common_month_site表示Mild分别与Moderate/Severe/Extreme的配对共同支持域。
+    All_class_common_month_site表示四个等级共同月份和共同站点的最严格支持域。
+
+RestrictionComparison
+    限制样本比较名称，例如Mild_vs_Severe或All_selected_classes。
+
+Support_Level
+    来自common-support诊断表的支持域层级。
+
+Target_Class / Target_Class_CN
+    在该限制样本中拟合“目标等级 vs Normal”的目标等级。
+
+Common_Months / Common_Sites
+    该限制样本使用的共同月份和共同站点。
+
+DeltaCBI_Target_minus_Normal及其CI、p、FDR
+    限制样本中目标等级相对Normal的Delta_CBI结果。
+
+n_sites / n_site_months / n_hours_target / n_hours_normal
+    限制样本LMM实际使用的站点数、Site_Month数、目标等级小时数和Normal小时数。
+
+Original_Main_DeltaCBI
+    该等级在05号主扩展结果中的Delta_CBI，用于比较限制前后变化。
+
+DeltaCBI_Change_From_Main
+    限制样本Delta_CBI减去主扩展Delta_CBI。
+    若Mild明显下降，说明原Mild偏高可能与支持域差异有关。
+
+十九、17_多等级_限制样本LMM模型摘要.txt
+-------------------------------------------------------------------------------
+限制样本LMM的statsmodels完整模型摘要。
+
+二十、18_多等级_限制样本DeltaCBI森林图.png
+-------------------------------------------------------------------------------
+限制样本Delta_CBI森林图。
+同一个目标等级可能在不同RestrictionComparison中重复出现，因为它处于不同共同支持域中。
+
+二十一、19_多等级_限制样本分析报告.txt
+-------------------------------------------------------------------------------
+限制样本分析报告，汇总A版本pairwise common-support和B版本all-class common-support结果。

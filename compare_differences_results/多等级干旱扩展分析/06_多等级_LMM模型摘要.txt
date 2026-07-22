@@ -1,0 +1,153 @@
+
+====================================================================================================
+Main_hours_only: Mild vs Normal
+Formula: Observed_T15cm_C ~ Macro_Within * Is_Target_Drought + C(Month_Factor) + Macro_Within:C(Month_Factor) + Macro_Mean_SiteMonth_C
+n_sites=27; n_site_months=159; n_target_hours=32600; n_normal_hours=50448
+                    Mixed Linear Model Regression Results
+==============================================================================
+Model:                  MixedLM      Dependent Variable:      Observed_T15cm_C
+No. Observations:       83048        Method:                  REML            
+No. Groups:             27           Scale:                   1.9737          
+Min. group size:        1968         Log-Likelihood:          -146307.6317    
+Max. group size:        5032         Converged:               Yes             
+Mean group size:        3075.9                                                
+------------------------------------------------------------------------------
+                                   Coef.  Std.Err.    z    P>|z| [0.025 0.975]
+------------------------------------------------------------------------------
+Intercept                          18.921    0.166 113.726 0.000 18.595 19.248
+C(Month_Factor)[T.11]              -2.268    0.095 -23.793 0.000 -2.455 -2.081
+C(Month_Factor)[T.12]              -2.713    0.109 -24.779 0.000 -2.928 -2.499
+C(Month_Factor)[T.2]               -2.420    0.123 -19.717 0.000 -2.661 -2.180
+C(Month_Factor)[T.4]               -1.268    0.081 -15.595 0.000 -1.427 -1.108
+C(Month_Factor)[T.5]               -0.325    0.076  -4.281 0.000 -0.473 -0.176
+C(Month_Factor)[T.6]               -0.057    0.078  -0.732 0.464 -0.209  0.095
+C(Month_Factor)[T.7]                0.721    0.080   9.012 0.000  0.564  0.878
+C(Month_Factor)[T.8]                0.259    0.080   3.225 0.001  0.101  0.416
+C(Month_Factor)[T.9]                0.272    0.079   3.436 0.001  0.117  0.427
+Macro_Within                        0.708    0.028  25.042 0.000  0.653  0.763
+Macro_Within:C(Month_Factor)[T.11]  0.109    0.015   7.356 0.000  0.080  0.138
+Macro_Within:C(Month_Factor)[T.12] -0.011    0.014  -0.742 0.458 -0.039  0.017
+Macro_Within:C(Month_Factor)[T.2]   0.051    0.015   3.481 0.000  0.022  0.080
+Macro_Within:C(Month_Factor)[T.4]   0.131    0.014   9.306 0.000  0.104  0.159
+Macro_Within:C(Month_Factor)[T.5]   0.044    0.014   3.089 0.002  0.016  0.073
+Macro_Within:C(Month_Factor)[T.6]  -0.025    0.015  -1.698 0.089 -0.053  0.004
+Macro_Within:C(Month_Factor)[T.7]  -0.048    0.015  -3.186 0.001 -0.077 -0.018
+Macro_Within:C(Month_Factor)[T.8]  -0.057    0.015  -3.815 0.000 -0.086 -0.028
+Macro_Within:C(Month_Factor)[T.9]  -0.079    0.015  -5.421 0.000 -0.107 -0.050
+Is_Target_Drought                  -0.031    0.011  -2.905 0.004 -0.052 -0.010
+Macro_Within:Is_Target_Drought      0.025    0.003   8.580 0.000  0.019  0.031
+Macro_Mean_SiteMonth_C              0.785    0.008 104.561 0.000  0.770  0.799
+Group Var                           0.577    0.114                            
+Group x Macro_Within Cov            0.056    0.016                            
+Macro_Within Var                    0.016    0.003                            
+==============================================================================
+
+
+
+====================================================================================================
+Main_hours_only: Moderate vs Normal
+Formula: Observed_T15cm_C ~ Macro_Within * Is_Target_Drought + C(Month_Factor) + Macro_Within:C(Month_Factor) + Macro_Mean_SiteMonth_C
+n_sites=26; n_site_months=114; n_target_hours=18408; n_normal_hours=31656
+                    Mixed Linear Model Regression Results
+=============================================================================
+Model:                 MixedLM      Dependent Variable:      Observed_T15cm_C
+No. Observations:      50064        Method:                  REML            
+No. Groups:            26           Scale:                   1.9094          
+Min. group size:       360          Log-Likelihood:          -87431.3747     
+Max. group size:       3216         Converged:               Yes             
+Mean group size:       1925.5                                                
+-----------------------------------------------------------------------------
+                                  Coef.  Std.Err.    z    P>|z| [0.025 0.975]
+-----------------------------------------------------------------------------
+Intercept                         15.365    0.182  84.568 0.000 15.009 15.722
+C(Month_Factor)[T.2]               0.176    0.060   2.940 0.003  0.059  0.294
+C(Month_Factor)[T.4]               2.433    0.090  27.127 0.000  2.257  2.609
+C(Month_Factor)[T.5]               3.633    0.126  28.751 0.000  3.385  3.880
+C(Month_Factor)[T.6]               4.404    0.173  25.481 0.000  4.065  4.743
+C(Month_Factor)[T.7]               5.121    0.181  28.250 0.000  4.766  5.477
+C(Month_Factor)[T.8]               4.948    0.192  25.738 0.000  4.571  5.325
+C(Month_Factor)[T.9]               4.573    0.185  24.779 0.000  4.211  4.934
+Macro_Within                       0.719    0.031  22.984 0.000  0.658  0.781
+Macro_Within:C(Month_Factor)[T.2] -0.052    0.011  -4.523 0.000 -0.074 -0.029
+Macro_Within:C(Month_Factor)[T.4]  0.131    0.006  22.269 0.000  0.120  0.143
+Macro_Within:C(Month_Factor)[T.5]  0.044    0.010   4.612 0.000  0.025  0.063
+Macro_Within:C(Month_Factor)[T.6]  0.027    0.007   3.756 0.000  0.013  0.041
+Macro_Within:C(Month_Factor)[T.7] -0.077    0.007 -11.838 0.000 -0.090 -0.065
+Macro_Within:C(Month_Factor)[T.8] -0.041    0.007  -5.619 0.000 -0.055 -0.027
+Macro_Within:C(Month_Factor)[T.9] -0.069    0.007  -9.291 0.000 -0.084 -0.055
+Is_Target_Drought                 -0.277    0.014 -20.311 0.000 -0.304 -0.251
+Macro_Within:Is_Target_Drought     0.011    0.004   2.949 0.003  0.004  0.018
+Macro_Mean_SiteMonth_C             0.665    0.013  53.096 0.000  0.640  0.690
+Group Var                          0.636    0.130                            
+Group x Macro_Within Cov           0.084    0.022                            
+Macro_Within Var                   0.025    0.005                            
+=============================================================================
+
+
+
+====================================================================================================
+Main_hours_only: Severe vs Normal
+Formula: Observed_T15cm_C ~ Macro_Within * Is_Target_Drought + C(Month_Factor) + Macro_Within:C(Month_Factor) + Macro_Mean_SiteMonth_C
+n_sites=23; n_site_months=44; n_target_hours=5544; n_normal_hours=11280
+                   Mixed Linear Model Regression Results
+============================================================================
+Model:                  MixedLM     Dependent Variable:     Observed_T15cm_C
+No. Observations:       16824       Method:                 REML            
+No. Groups:             23          Scale:                  1.4498          
+Min. group size:        240         Log-Likelihood:         -27142.7121     
+Max. group size:        1248        Converged:              Yes             
+Mean group size:        731.5                                               
+----------------------------------------------------------------------------
+                                  Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+----------------------------------------------------------------------------
+Intercept                         11.539    0.358 32.263 0.000 10.838 12.240
+C(Month_Factor)[T.4]               6.615    0.354 18.673 0.000  5.921  7.310
+C(Month_Factor)[T.6]              12.302    0.586 20.986 0.000 11.153 13.451
+C(Month_Factor)[T.7]              13.107    0.615 21.303 0.000 11.901 14.312
+C(Month_Factor)[T.8]              13.430    0.649 20.697 0.000 12.158 14.702
+C(Month_Factor)[T.9]              12.796    0.625 20.461 0.000 11.570 14.022
+Macro_Within                       0.666    0.038 17.545 0.000  0.592  0.741
+Macro_Within:C(Month_Factor)[T.4]  0.174    0.027  6.334 0.000  0.120  0.227
+Macro_Within:C(Month_Factor)[T.6]  0.055    0.017  3.206 0.001  0.021  0.089
+Macro_Within:C(Month_Factor)[T.7] -0.049    0.021 -2.312 0.021 -0.091 -0.007
+Macro_Within:C(Month_Factor)[T.8] -0.057    0.017 -3.386 0.001 -0.089 -0.024
+Macro_Within:C(Month_Factor)[T.9] -0.100    0.018 -5.566 0.000 -0.136 -0.065
+Is_Target_Drought                 -0.133    0.021 -6.330 0.000 -0.174 -0.092
+Macro_Within:Is_Target_Drought     0.013    0.006  2.142 0.032  0.001  0.025
+Macro_Mean_SiteMonth_C             0.029    0.044  0.662 0.508 -0.057  0.115
+Group Var                          0.774    0.196                           
+Group x Macro_Within Cov           0.115    0.033                           
+Macro_Within Var                   0.027    0.007                           
+============================================================================
+
+
+
+====================================================================================================
+Main_hours_only: Extreme vs Normal
+Formula: Observed_T15cm_C ~ Macro_Within * Is_Target_Drought + C(Month_Factor) + Macro_Within:C(Month_Factor) + Macro_Mean_SiteMonth_C
+n_sites=13; n_site_months=16; n_target_hours=2400; n_normal_hours=3984
+                    Mixed Linear Model Regression Results
+=============================================================================
+Model:                 MixedLM      Dependent Variable:      Observed_T15cm_C
+No. Observations:      6384         Method:                  REML            
+No. Groups:            13           Scale:                   2.1467          
+Min. group size:       192          Log-Likelihood:          -11566.2061     
+Max. group size:       1008         Converged:               Yes             
+Mean group size:       491.1                                                 
+-----------------------------------------------------------------------------
+                                  Coef.  Std.Err.    z    P>|z| [0.025 0.975]
+-----------------------------------------------------------------------------
+Intercept                         17.761    0.446  39.817 0.000 16.886 18.635
+C(Month_Factor)[T.8]               5.394    1.883   2.864 0.004  1.703  9.085
+C(Month_Factor)[T.9]               4.810    1.788   2.690 0.007  1.306  8.314
+Macro_Within                       0.834    0.086   9.674 0.000  0.665  1.003
+Macro_Within:C(Month_Factor)[T.8] -0.207    0.110  -1.878 0.060 -0.423  0.009
+Macro_Within:C(Month_Factor)[T.9] -0.220    0.110  -1.995 0.046 -0.436 -0.004
+Is_Target_Drought                 -0.569    0.039 -14.644 0.000 -0.645 -0.493
+Macro_Within:Is_Target_Drought     0.033    0.010   3.298 0.001  0.014  0.053
+Macro_Mean_SiteMonth_C             0.308    0.228   1.349 0.177 -0.139  0.754
+Group Var                          0.883    0.261                            
+Group x Macro_Within Cov           0.145    0.048                            
+Macro_Within Var                   0.037    0.011                            
+=============================================================================
+
