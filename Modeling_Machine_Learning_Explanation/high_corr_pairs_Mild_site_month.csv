@@ -1,0 +1,2 @@
+﻿DroughtLevel,Layer,feature_1,feature_2,spearman_r,warning
+Mild,site_month,LAI,FAPAR,0.9414324136495237,正式解读重要性前建议在 FEATURES_TO_DROP 中人工二选一后重跑

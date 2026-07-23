@@ -1,0 +1,37 @@
+机器学习解释分析运行摘要
+========================
+
+输出目录：
+E:\forest_microclimate\ForestMicroclimate\results\Modeling_Machine_Learning_Explanation
+
+核心基础表：
+site_month_delta_cbi_by_level.csv
+
+基础表粒度：
+Site_ID x YearMonth x DroughtLevel
+
+DeltaCBI定义：
+DeltaCBI = Target_CBI - Normal_CBI
+
+Pair_flag说明：
+当前 Pair_flag=ok 默认要求 Target 和 Normal 均至少 72 个有效小时，
+且 OLS CBI 估计成功。MacroSD 是否参与 Pair_flag：False。
+MacroSD 仍保留为审计字段。
+
+机器学习定位：
+本分析是小样本探索性解释建模，目标是提示变量重要性排序和方向趋势，
+不是严格因果推断或确定性统计结论。
+
+重要实现：
+1. 站点级为主分析，站点-月级为互补分析。
+2. 站点-月级交叉验证使用 Leave-One-Site-Out，避免同一站点泄漏。
+3. 基线 RMSE 在每个 CV fold 内使用训练集均值计算。
+4. 缺失值按列剔除和中位数填补，不再整行删除。
+5. 坡向转换为 aspect_sin / aspect_cos。
+6. soil_type 若存在则 one-hot。
+7. 高相关变量对输出到 high_corr_pairs_*.csv；正式解读前建议在 FEATURES_TO_DROP 中人工筛选后重跑。
+8. CV-SHAP 重要性优先；若 shap 不可用，则使用 RF impurity importance 作为 fallback。
+9. CV permutation importance 只在验证折样本数 >= 3 时计算；LOO 中该指标可能为空。
+
+运行耗时：
+5243.5 秒

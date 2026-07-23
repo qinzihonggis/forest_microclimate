@@ -1,0 +1,8 @@
+﻿name,path,exists
+hourly_temperature_csv,E:\forest_microclimate\ForestMicroclimate\results\时间序列图\逐小时温度对齐表.csv,True
+spi_daily_wide_xlsx,E:\forest_microclimate\ForestMicroclimate\results\daily_SPI_result\各站点SPI30d逐日宽表_2025.xlsx,True
+static_site_csv,E:\forest_microclimate\ForestMicroclimate\Tensor_LatLong.csv,True
+lai_8day_csv,E:\forest_microclimate\ForestMicroclimate\LAI\站点LAI_8日尺度提取结果.csv,True
+fapar_8day_csv,E:\forest_microclimate\ForestMicroclimate\FAPAR\站点FAPAR_8日尺度提取结果.csv,True
+micro_soil_daily_csv,E:\forest_microclimate\ForestMicroclimate\MicroTandSoilT.csv,True
+output_dir,E:\forest_microclimate\ForestMicroclimate\results\Modeling_Machine_Learning_Explanation,True

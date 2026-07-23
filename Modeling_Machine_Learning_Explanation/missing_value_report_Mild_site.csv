@@ -1,0 +1,14 @@
+﻿DroughtLevel,Layer,feature,missing_rate,non_missing,unique_values,dropped,drop_reason,impute_median
+Mild,site,SPI_intensity,0.0,27,27,False,,0.992682695388794
+Mild,site,Duration_days,0.0,27,23,False,,49.0
+Mild,site,elevation,0.0,27,25,False,,443.0
+Mild,site,slope,0.0,27,27,False,,23.232879638671875
+Mild,site,aspect_sin,0.0,27,27,False,,0.0963242289547708
+Mild,site,aspect_cos,0.0,27,27,False,,0.42148641652577945
+Mild,site,LAI,0.0,27,26,False,,3.8025000000000007
+Mild,site,FAPAR,0.0,27,27,False,,0.706901408450704
+Mild,site,canopy_height,0.0,27,15,False,,16.0
+Mild,site,soil_moisture,0.14814814814814814,23,23,False,,0.27949075839436616
+Mild,site,soil_temperature,0.14814814814814814,23,23,False,,18.659534801818186
+Mild,site,nighttime_light,1.0,0,0,True,missing_rate>0.5,
+Mild,site,built_up_distance,1.0,0,0,True,missing_rate>0.5,

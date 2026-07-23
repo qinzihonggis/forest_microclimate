@@ -1,0 +1,2 @@
+﻿DroughtLevel,Layer,n_samples,n_features,CV_method,R2_cv,RMSE_cv,Baseline_RMSE_cv,RMSE_improvement_vs_baseline,note
+Moderate,site_month,114,11,Leave-One-Site-Out,-0.0004460800261947284,0.11737945459958633,0.11883659180383752,0.0014571372042511826,Baseline uses training-fold mean for each validation fold.
