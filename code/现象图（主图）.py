@@ -7,13 +7,13 @@ import warnings
 
 import geopandas as gpd
 import matplotlib as mpl
-import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
-from matplotlib.colors import Normalize, TwoSlopeNorm
+from matplotlib.colors import TwoSlopeNorm
 from matplotlib.lines import Line2D
 import numpy as np
 import pandas as pd
+from scipy.stats import linregress
 from tqdm import tqdm
 
 
@@ -25,34 +25,89 @@ from tqdm import tqdm
 # Fig. 1 提出的核心现象，而不是变成相互独立的数据展示。
 #
 # 全文核心问题：
-#   极端干旱是否会改变森林微气候缓冲能力，而且这种改变是否在站点间呈现
-#   明显空间异质性？如果存在空间异质性，它是由干旱暴露强度、局地环境过程、
-#   空间背景共同塑造，还是由少数站点、某个事件定义或某个区域干旱过程造成？
+#   不同等级干旱是否改变森林微气候缓冲能力（有没有），这种改变的幅度有多大
+#   （整体等级差异和站点差异），这种幅度是否呈单调剂量效应，还是存在更复杂的
+#   非单调模式？如果存在空间异质性，它是由干旱暴露强度、局地环境过程、空间背景
+#   共同塑造，还是由少数站点、样本支持域或某个区域干旱过程造成？
 #
 # 核心响应变量：
-#   Delta_CBI = Event_CBI - Reference_CBI
-#   其中 CBI 是 15 cm 微气候温度对 ERA5 2 m 温度的响应斜率；
-#   Delta_CBI > 0 表示极端干旱事件期 CBI 高于参考期，即缓冲减弱；
-#   Delta_CBI < 0 表示事件期 CBI 低于参考期，即表观缓冲增强或维持。
+#   CBI = 15 cm 微气候温度对 ERA5 2 m 温度的响应斜率。
+#   Delta_CBI = Target_Class_CBI - Normal_CBI，其中 Target_Class 包括
+#   Mild / Moderate / Severe / Extreme 四级干旱。
+#   Delta_CBI > 0 表示干旱等级下 CBI 高于 Normal，即缓冲减弱；
+#   Delta_CBI < 0 表示干旱等级下 CBI 低于 Normal，即表观缓冲增强或维持。
 #
-# 事件定义：
-#   主分析把极端干旱定义为 SPI30d <= -2.0；
-#   正常参考期定义为 -0.5 < SPI30d < 0.5；
-#   有效样本以“事件 x 站点”为基本单元，并要求事件期 CBI 和参考期 CBI
-#   均通过质量控制，即 Pair_flag == "ok"。
+# Fig.1 在全文中的定位：
+#   这是第一张结果图，只回答“有没有、差异多大、差异模式是什么、结果是否可信、
+#   物理意义是否重要”。它不解释机制，不做归因；机制解释留给 Fig.2-Fig.4，
+#   稳健性证据集中放入 Fig.5。
 #
-# 推荐正文图件闭环：
-#   Fig. 1  发现问题：
-#       极端干旱下 CBI 响应在站点间显著分化，并呈现空间结构。
-#       本脚本实现该图。它回答“发生了什么、在哪里发生、差异有多大”。
-#       需要数据：
-#           - Tensor_LatLong.csv：Site_ID, Longitude, Latitude；
-#           - daily_SPI 干旱事件长表：Event_ID, Start_Date, End_Date,
-#             Duration_Days, Min_Daily_SPI, Drought_Level, Severity；
-#           - 事件-参考期 CBI 配对表：Event_CBI, Reference_CBI,
-#             Delta_CBI, Pair_flag；
-#           - 福建省行政边界 shp；
-#           - SPI30d 逐日宽表，用于插图中的每日极端干旱站点比例。
+# Fig.1 四面板新版设计：
+#   A. Multi-level Delta CBI forest plot
+#       回答问题：有没有区域总体差异；差异是否呈单调等级梯度。
+#       图中信息：横轴为 Delta_CBI，纵轴为 Mild/Moderate/Severe/Extreme；
+#       点为多等级 LMM 估计，误差线为 95% CI；x=0 表示与 Normal 无差异；
+#       主模型点上方标注 n_sites 和 FDR q 值；同时叠加较弱的 restricted common-support
+#       方块点作为样本支持域稳健性对照，但不显示其误差线，避免主图过于拥挤。
+#       体现维度：有没有差异、差异是什么模式、结果是否可信。
+#       数据来源：05_多等级_LMM结果汇总.csv、
+#       16_多等级_限制样本LMM结果汇总.csv、09_多等级_DeltaCBI有序趋势检验.csv。
+#
+#   B. Absolute CBI distributions across classes
+#       回答问题：区域总体差异量级有多大；CBI 绝对值在物理上意味着什么。
+#       图中信息：Normal/Mild/Moderate/Severe/Extreme 五组箱线图和散点；
+#       横轴标签下直接标注每组 n；水平参考线 CBI=1 表示“林内温度完全跟随
+#       宏观温度，即无缓冲”的理论参照。
+#       体现维度：差异多大、物理意义是否重要。
+#       数据来源：00_逐小时温度_SPI合并审计表.csv 重算 SiteMonth CBI，
+#       再用 03_各等级_SiteMonth_配对审计.csv 的 Pass_Hours_Plus_Macro_SD 过滤。
+#
+#   C. Spatial structure of site-level Delta CBI
+#       回答问题：差异是否具有空间结构，还是随机分散在站点之间。
+#       图中信息：福建边界和站点位置；点颜色为站点中位 Delta_CBI，红色表示
+#       缓冲减弱、蓝色表示缓冲增强或维持；点大小统一，避免样本量视觉编码干扰
+#       空间结构判断。n_pairs 不在主图中编码，写入输出表和图注。
+#       体现维度：差异多大（站点间）、是否存在空间结构。
+#       数据来源：Tensor_LatLong.csv、福建省行政边界 shp、五级有效 SiteMonth 配对表。
+#
+#   D. Site ranking across all drought classes
+#       回答问题：哪些站点响应最强/最弱；站点排序是否只由 Extreme 小样本驱动。
+#       图中信息：横轴为站点中位 Delta_CBI；纵轴为按中位 Delta_CBI 排序后的站点排名；
+#       棒棒糖线段从 0 延伸到站点中位数，端点颜色仍按 Delta_CBI 发散色带编码；
+#       只轻标注响应最强和最弱的少数站点，完整站点 ID 与 n_pairs 写入输出表。
+#       体现维度：差异多大（站点排序）、哪些站点是主要异常值。
+#       数据来源：03_各等级_SiteMonth_配对审计.csv 与重算 SiteMonth CBI 合并后的长表。
+#
+# 五个信息维度在 Fig.1 中的落点：
+#   1. 有没有差异：面板 A 的 Delta_CBI 点估计、95% CI 和 FDR q 值。
+#   2. 差异多大：面板 A 的模型效应量，面板 B 的绝对 CBI 分布，面板 C/D 的站点差异。
+#   3. 差异是什么模式：面板 A 的等级排序和有序趋势检验。
+#   4. 结果是否可信：面板 A 的 n_sites/q 值和限制公共支持集模型；
+#      面板 C/D 对应的 n_pairs 保存在输出表，图注中透明报告。
+#   5. 物理意义是否重要：面板 B 保留绝对 CBI，并加入 CBI=1 无缓冲参考线。
+#
+# Fig.1 绝对 CBI 对比版（候选对照输出）：
+#   输出文件名：图1_现象图_主图_绝对CBI对比版.png/pdf。
+#   设计目的：
+#       这套图不把 Delta_CBI 作为主视觉，而直接展示相减前的 Normal_CBI 与
+#       drought-class CBI。它回答的是“干旱期和 Normal 期的 CBI 本身分别处在
+#       什么绝对位置，肉眼是否能看到成对偏移”，更直观，但不如 Delta_CBI
+#       森林图那样直接表达模型效应量。因此该版本用于和 Delta_CBI 优化版比较，
+#       不自动取代主推断图。
+#   A. Paired absolute CBI contrast by drought class
+#       每个干旱等级一组，每组包含对应配对的 Normal reference CBI 和 Target
+#       drought-class CBI。箱线图/散点/淡配对线共同显示“相减前两组值”是否分开；
+#       上方标注 n_site 和 FDR q，帮助保留主模型推断信息。
+#   B. Absolute CBI distributions across all states
+#       汇总 Normal/Mild/Moderate/Severe/Extreme 五类状态的绝对 CBI 分布，并保留
+#       CBI=1 无缓冲参考线。它回答“不同状态的 CBI 物理量级在哪里”。
+#   C. Spatial map of drought-period absolute CBI
+#       地图点颜色表示各站点干旱期 Target_CBI 的中位数，而不是 Delta_CBI。
+#       它回答“干旱期间哪些站点的绝对缓冲状态更弱/更接近无缓冲”。
+#   D. Site-level paired absolute CBI ranking
+#       每个站点一行，显示站点 Normal median CBI 与 drought-period median CBI 两个点，
+#       并用水平线连接。排序按 drought-period median CBI，从而突出干旱期绝对缓冲状态
+#       的站点差异；该面板不直接显示 Delta_CBI 数值，但读者可通过两个点的间距判断迁移。
 #
 #   Fig. 2  排除一个最直接解释：
 #       站点差异是否只是因为有些站点遭遇的干旱更强、更久？
@@ -204,6 +259,12 @@ class Config:
     project_dir: Path = Path(r"E:\forest_microclimate\ForestMicroclimate")
     output_dir: Path = Path(r"E:\forest_microclimate\ForestMicroclimate\results\论文主图\Fig1_现象图")
     extreme_spi_threshold: float = -2.0
+    severe_spi_threshold: float = -1.5
+    moderate_spi_threshold: float = -1.0
+    normal_spi_low: float = -0.5
+    normal_spi_high: float = 0.5
+    min_site_month_status_cbi_hours: int = 72
+    min_site_month_status_macro_sd: float = 1.0
     figure_dpi: int = 600
 
     @property
@@ -211,30 +272,52 @@ class Config:
         return self.project_dir / "Tensor_LatLong.csv"
 
     @property
-    def drought_events_csv(self) -> Path:
-        return (
-            self.project_dir
-            / "results"
-            / "daily_SPI_features"
-            / "福建省观测站2025年daily_SPI干旱事件长表.csv"
-        )
-
-    @property
-    def spi_wide_xlsx(self) -> Path:
-        return (
-            self.project_dir
-            / "results"
-            / "daily_SPI_result"
-            / "各站点SPI30d逐日宽表_2025.xlsx"
-        )
-
-    @property
-    def event_pairs_csv(self) -> Path:
+    def hourly_spi_merged_csv(self) -> Path:
         return (
             self.project_dir
             / "results"
             / "compare_differences_results"
-            / "04_极端事件CBI与事件后正常参考期对比表.csv"
+            / "00_逐小时温度_SPI合并审计表.csv"
+        )
+
+    @property
+    def multi_pair_audit_csv(self) -> Path:
+        return (
+            self.project_dir
+            / "results"
+            / "compare_differences_results"
+            / "多等级干旱扩展分析"
+            / "03_各等级_SiteMonth_配对审计.csv"
+        )
+
+    @property
+    def multi_lmm_summary_csv(self) -> Path:
+        return (
+            self.project_dir
+            / "results"
+            / "compare_differences_results"
+            / "多等级干旱扩展分析"
+            / "05_多等级_LMM结果汇总.csv"
+        )
+
+    @property
+    def multi_lmm_restricted_csv(self) -> Path:
+        return (
+            self.project_dir
+            / "results"
+            / "compare_differences_results"
+            / "多等级干旱扩展分析"
+            / "16_多等级_限制样本LMM结果汇总.csv"
+        )
+
+    @property
+    def multi_trend_test_csv(self) -> Path:
+        return (
+            self.project_dir
+            / "results"
+            / "compare_differences_results"
+            / "多等级干旱扩展分析"
+            / "09_多等级_DeltaCBI有序趋势检验.csv"
         )
 
     @property
@@ -278,37 +361,29 @@ class FigureParameters:
     map_edgewidth: float = 0.8
     map_padding_fraction: float = 0.06
 
-    # Fig. 1A：极端干旱事件频次点图参数。
-    panel_a_zero_site_size: float = 18
-    panel_a_zero_site_color: str = "#b8b8b8"
-    panel_a_event_size_min: float = 35
-    panel_a_event_size_max: float = 115
-    panel_a_event_cmap: str = "OrRd"
-    panel_a_event_edgecolor: str = "#3a1f12"
-    panel_a_event_linewidth: float = 0.45
-    panel_a_event_alpha: float = 0.92
-    panel_a_legend_loc: str = "upper left"
-    panel_a_legend_anchor_x: float = 0.01
-    panel_a_legend_anchor_y: float = 0.98
+    # Fig. 1A：多等级 Delta_CBI 森林图参数。
+    panel_a_marker_size: float = 72
+    panel_a_restricted_marker_size: float = 28
+    panel_a_ci_linewidth: float = 1.4
+    panel_a_restricted_alpha: float = 0.35
+    panel_a_zero_line_color: str = "#333333"
+    panel_a_text_x: float = 0.985
+    panel_a_text_size: int = 7
+    panel_a_xlim_left_padding_fraction: float = 0.14
+    panel_a_xlim_right_padding_fraction: float = 0.14
 
-    # Fig. 1A 插入时间轴：显示每日达到极端干旱阈值的站点比例。
-    panel_a_inset_x: float = 0.52
-    panel_a_inset_y: float = 0.06
-    panel_a_inset_width: float = 0.44
-    panel_a_inset_height: float = 0.25
-    panel_a_inset_title_size: int = 6
-    panel_a_inset_label_size: int = 6
-    panel_a_inset_tick_size: int = 5
-    panel_a_timeline_fill_color: str = "#d95f02"
-    panel_a_timeline_fill_alpha: float = 0.26
-    panel_a_timeline_line_color: str = "#9d2f14"
-    panel_a_timeline_linewidth: float = 1.1
-    panel_a_timeline_month_interval: int = 2
+    panel_a_legend_loc: str = "center right"
+    panel_a_legend_anchor_x: float = 0.99
+    panel_a_legend_anchor_y: float = 0.53
+    panel_label_x: float = 0.00
+    panel_label_y: float = 1.02
+    panel_label_size: int = 11
 
     # Fig. 1B/C：Delta_CBI 发散色带。以 0 为中心，蓝色表示事件期 CBI 低于参考期，
     # 红色表示事件期 CBI 高于参考期。
     delta_cmap: str = "RdBu_r"
     delta_limit_padding: float = 1.15
+    site_delta_limit_padding: float = 1.30
     panel_b_point_size_min: float = 35
     panel_b_point_size_max: float = 110
     panel_b_point_alpha: float = 0.86
@@ -323,52 +398,77 @@ class FigureParameters:
     panel_b_hist_alpha: float = 0.85
     panel_b_hist_zero_line_color: str = "#222222"
     panel_b_hist_zero_linewidth: float = 0.8
+    panel_b_reference_line_value: float = 1.0
+    panel_b_reference_line_color: str = "#333333"
+    panel_b_jitter_half_width: float = 0.10
+    panel_b_jitter_seed: int = 20260722
+    panel_b_median_label_size: int = 7
+    panel_b_median_label_color: str = "#333333"
+    panel_b_median_label_offset_fraction: float = 0.027
+    drought_level_palette: tuple[str, ...] = (
+        "#5b8fd9",
+        "#f2b94b",
+        "#e67f3e",
+        "#c74332",
+        "#7f1d1d",
+    )
 
-    # Fig. 1C：站点中位数 Delta_CBI 地图参数。
+    # Fig. 1C：站点中位数 Delta_CBI 地图参数。响应站点点大小固定，只用颜色表达
+    # Median_Delta_CBI；N_pairs 保存在输出表和图注，不在地图主视觉中编码。
     panel_c_background_site_size: float = 15
     panel_c_background_site_color: str = "#c7c7c7"
-    panel_c_response_size_min: float = 45
-    panel_c_response_size_max: float = 145
+    panel_c_response_size: float = 92
     panel_c_response_edgecolor: str = "#1f1f1f"
     panel_c_response_linewidth: float = 0.45
     panel_c_response_alpha: float = 0.93
-    panel_c_legend_loc: str = "lower right"
-    panel_c_legend_anchor_x: float = 0.99
-    panel_c_legend_anchor_y: float = 0.01
 
-    # Fig. 1D：站点排序散点图。点颜色按 Min_Daily_SPI，不重复编码横轴 Delta_CBI。
-    panel_d_spi_cmap: str = "YlOrBr_r"
-    panel_d_event_point_size: float = 30
-    panel_d_event_point_alpha: float = 0.78
-    panel_d_event_edgecolor: str = "white"
-    panel_d_event_linewidth: float = 0.35
-    panel_d_site_median_marker: str = "D"
+    # Fig. 1D：站点排序棒棒糖图。线段从 0 指向站点中位 Delta_CBI，端点颜色按 Delta_CBI 编码。
     panel_d_site_median_size: float = 45
-    panel_d_site_median_facecolor: str = "white"
     panel_d_site_median_edgecolor: str = "#111111"
     panel_d_site_median_linewidth: float = 0.9
+    panel_d_lollipop_linewidth: float = 1.35
+    panel_d_lollipop_alpha: float = 0.90
+    panel_d_iqr_linewidth: float = 1.2
+    panel_d_iqr_alpha: float = 0.70
+    panel_d_iqr_axis_padding: float = 1.08
+    panel_d_extreme_label_count: int = 0
     panel_d_zero_line_color: str = "#333333"
     panel_d_zero_linewidth: float = 0.85
     panel_d_zero_linestyle: str = "--"
     panel_d_row_line_color: str = "#e5e5e5"
     panel_d_row_linewidth: float = 0.45
-    panel_d_jitter_half_width: float = 0.16
-    panel_d_jitter_seed: int = 20250720
-    panel_d_n_label_fontsize: int = 7
-    panel_d_n_label_offset_fraction: float = 0.018
-    panel_d_site_label_size: int = 6
+    panel_d_site_label_size: int = 5
 
     # 色标位置。坐标为相对所在面板的 [x, y, width, height]。
-    delta_colorbar_x: float = 0.04
-    delta_colorbar_y: float = 0.88
-    delta_colorbar_width: float = 0.30
-    delta_colorbar_height: float = 0.035
-    spi_colorbar_x: float = 0.04
-    spi_colorbar_y: float = 0.90
-    spi_colorbar_width: float = 0.30
-    spi_colorbar_height: float = 0.035
+    panel_c_delta_colorbar_x: float = 0.58
+    panel_c_delta_colorbar_y: float = 0.075
+    panel_c_delta_colorbar_width: float = 0.35
+    panel_c_delta_colorbar_height: float = 0.035
     colorbar_tick_size: int = 7
     colorbar_label_size: int = 7
+
+    # Fig.1 绝对 CBI 对比版参数：用于新增候选图，不影响 Delta_CBI 原版和优化版。
+    absolute_normal_color: str = "#6d9ed6"
+    absolute_drought_color: str = "#d95f3d"
+    absolute_cmap: str = "YlOrRd"
+    absolute_cbi_limit_padding: float = 0.08
+    absolute_panel_a_pair_line_color: str = "#b8b8b8"
+    absolute_panel_a_pair_line_alpha: float = 0.22
+    absolute_panel_a_pair_linewidth: float = 0.45
+    absolute_panel_a_box_width: float = 0.26
+    absolute_panel_a_point_size: float = 14
+    absolute_panel_a_point_alpha: float = 0.42
+    absolute_panel_a_jitter_half_width: float = 0.045
+    absolute_panel_a_jitter_seed: int = 20260723
+    absolute_panel_c_response_size: float = 92
+    absolute_panel_c_colorbar_x: float = 0.58
+    absolute_panel_c_colorbar_y: float = 0.075
+    absolute_panel_c_colorbar_width: float = 0.35
+    absolute_panel_c_colorbar_height: float = 0.035
+    absolute_panel_d_line_color: str = "#9a9a9a"
+    absolute_panel_d_line_alpha: float = 0.55
+    absolute_panel_d_linewidth: float = 0.9
+    absolute_panel_d_point_size: float = 42
 
 
 CFG = Config()
@@ -459,6 +559,69 @@ def finite_symmetric_limit(values: pd.Series, fallback: float = 0.2) -> float:
     return lim * FP.delta_limit_padding
 
 
+def finite_symmetric_limit_with_padding(
+    values: pd.Series,
+    fallback: float = 0.2,
+    padding: float = 1.15,
+) -> float:
+    """按指定 padding 计算 0 中心对称范围，用于不同面板独立控制视觉尺度。"""
+
+    arr = pd.to_numeric(values, errors="coerce").to_numpy()
+    arr = arr[np.isfinite(arr)]
+    if arr.size == 0:
+        return fallback
+    lim = float(np.nanmax(np.abs(arr)))
+    if not np.isfinite(lim) or lim == 0:
+        return fallback
+    return lim * padding
+
+
+def finite_value_limits(
+    values: pd.Series,
+    fallback: tuple[float, float] = (0.3, 1.3),
+    padding: float = 0.08,
+) -> tuple[float, float]:
+    """计算绝对 CBI 连续色带/坐标范围，padding 为数据跨度比例。"""
+
+    arr = pd.to_numeric(values, errors="coerce").to_numpy()
+    arr = arr[np.isfinite(arr)]
+    if arr.size == 0:
+        return fallback
+    vmin = float(np.nanmin(arr))
+    vmax = float(np.nanmax(arr))
+    span = vmax - vmin
+    if not np.isfinite(span) or span <= 0:
+        return fallback
+    return vmin - span * padding, vmax + span * padding
+
+
+def build_absolute_site_response(valid_pairs: pd.DataFrame, sites_summary: pd.DataFrame) -> pd.DataFrame:
+    """按站点汇总站点 Normal 与 drought-period 绝对 CBI 中位数。"""
+
+    normal_site = (
+        valid_pairs[["Site_ID", "YearMonth", "Normal_CBI"]]
+        .drop_duplicates(["Site_ID", "YearMonth"])
+        .groupby("Site_ID", as_index=False)
+        .agg(Median_Normal_CBI=("Normal_CBI", "median"), N_normal_site_months=("Normal_CBI", "size"))
+    )
+    drought_site = (
+        valid_pairs.groupby("Site_ID", as_index=False)
+        .agg(
+            Median_Drought_CBI=("Target_CBI", "median"),
+            Q25_Drought_CBI=("Target_CBI", lambda x: x.quantile(0.25)),
+            Q75_Drought_CBI=("Target_CBI", lambda x: x.quantile(0.75)),
+            N_drought_pairs=("Target_CBI", "size"),
+            N_drought_classes=("Target_Class", "nunique"),
+        )
+    )
+    return (
+        drought_site.merge(normal_site, on="Site_ID", how="left")
+        .merge(sites_summary[["Site_ID", "Longitude", "Latitude"]], on="Site_ID", how="left")
+        .sort_values("Median_Drought_CBI")
+        .reset_index(drop=True)
+    )
+
+
 def size_from_count(
     count: pd.Series | np.ndarray,
     min_size: float,
@@ -480,6 +643,29 @@ def size_from_count(
     return min_size + (np.sqrt(values) / np.sqrt(vmax)) * (max_size - min_size)
 
 
+def linear_size_from_count(
+    count: pd.Series | np.ndarray,
+    min_size: float,
+    max_size: float,
+    count_min: float | None = None,
+    count_max: float | None = None,
+) -> np.ndarray:
+    """把较窄范围的样本量线性映射为散点面积。
+
+    Fig.1C 的站点有效配对数实际只有约 7-17，如果继续用平方根缩放，
+    不同站点和图例圆点大小会很接近。线性缩放用于增强样本量透明度。
+    """
+
+    values = np.asarray(count, dtype=float)
+    if values.size == 0:
+        return values
+    min_count = np.nanmin(values) if count_min is None else float(count_min)
+    max_count = np.nanmax(values) if count_max is None else float(count_max)
+    if not np.isfinite(min_count) or not np.isfinite(max_count) or max_count == min_count:
+        return np.full_like(values, (min_size + max_size) / 2, dtype=float)
+    return min_size + (values - min_count) / (max_count - min_count) * (max_size - min_size)
+
+
 def format_longitude(value: float, _pos: object) -> str:
     """把经度刻度显示为 116°E，而不是在坐标轴标题中写 deg E。"""
 
@@ -499,36 +685,154 @@ def apply_lon_lat_tick_format(ax: plt.Axes) -> None:
     ax.yaxis.set_major_formatter(FuncFormatter(format_latitude))
 
 
+def format_compact_p(value: float) -> str:
+    """统一 q / p 值格式，返回可直接接在 q/p 后面的规范文本。"""
+
+    value = float(value)
+    if not np.isfinite(value):
+        return "= NA"
+    if value < 0.001:
+        return " < 0.001"
+    return f" = {value:.3f}"
+
+
+def set_panel_title(ax: plt.Axes, label: str, title: str) -> None:
+    """把面板字母放左上角、子标题居中，统一四个子图的标题结构。"""
+
+    ax.text(
+        FP.panel_label_x,
+        FP.panel_label_y,
+        label,
+        transform=ax.transAxes,
+        ha="left",
+        va="bottom",
+        fontsize=FP.panel_label_size,
+        fontweight="bold",
+    )
+    ax.set_title(title, loc="center", fontweight="bold")
+
+
+def classify_drought_class(spi30d: pd.Series) -> pd.Series:
+    """按多等级扩展分析的 SPI30d 阈值重建五级干旱状态。
+
+    分级边界必须与“多等级干旱扩展分析”一致，否则 Fig.1B-D 的原始分布
+    会和 Fig.1A 的 LMM 结果失去可比性：
+        - Normal:   normal_spi_low < SPI30d < normal_spi_high
+        - Mild:     moderate_spi_threshold < SPI30d <= normal_spi_low
+        - Moderate: severe_spi_threshold < SPI30d <= moderate_spi_threshold
+        - Severe:   extreme_spi_threshold < SPI30d <= severe_spi_threshold
+        - Extreme:  SPI30d <= extreme_spi_threshold
+
+    其他偏湿或轻微异常状态统一记为 Other，不进入 Target-vs-Normal CBI 配对。
+    """
+
+    values = pd.to_numeric(spi30d, errors="coerce")
+    conditions = [
+        values.gt(CFG.normal_spi_low) & values.lt(CFG.normal_spi_high),
+        values.gt(CFG.moderate_spi_threshold) & values.le(CFG.normal_spi_low),
+        values.gt(CFG.severe_spi_threshold) & values.le(CFG.moderate_spi_threshold),
+        values.gt(CFG.extreme_spi_threshold) & values.le(CFG.severe_spi_threshold),
+        values.le(CFG.extreme_spi_threshold),
+    ]
+    choices = ["Normal", "Mild", "Moderate", "Severe", "Extreme"]
+    return pd.Series(np.select(conditions, choices, default="Other"), index=spi30d.index)
+
+
+def estimate_site_month_status_cbi(group: pd.DataFrame) -> pd.Series:
+    """对一个 Site_ID × YearMonth × Drought_Class 子集计算 OLS CBI。
+
+    CBI 定义为 Observed_T15cm_C 对 ERA5_T2m_C 的 OLS 响应斜率：
+        Observed_T15cm_C = Intercept + CBI × ERA5_T2m_C + error
+
+    这里是 Fig.1B-D 的描述性 SiteMonth CBI，目的不是替代多等级 LMM，
+    而是为“原始分布、空间异质性、站点排序”提供真实五级底层样本。
+    为避免由过少小时数或宏观温度变化太小导致斜率不稳定，函数同时输出
+    n_hours、Macro_SD 和 CBI_flag，后续再叠加配对审计表的最终 QC 标记。
+    """
+
+    data = group[["ERA5_T2m_C", "Observed_T15cm_C"]].dropna()
+    n_hours = int(len(data))
+    macro_sd = float(data["ERA5_T2m_C"].std(ddof=1)) if n_hours > 1 else np.nan
+    if n_hours < CFG.min_site_month_status_cbi_hours:
+        return pd.Series(
+            {
+                "CBI": np.nan,
+                "Intercept": np.nan,
+                "R2": np.nan,
+                "p_slope": np.nan,
+                "n_hours": n_hours,
+                "Macro_SD": macro_sd,
+                "CBI_flag": f"insufficient_hours_lt_{CFG.min_site_month_status_cbi_hours}",
+            }
+        )
+    if not np.isfinite(macro_sd) or macro_sd < CFG.min_site_month_status_macro_sd:
+        return pd.Series(
+            {
+                "CBI": np.nan,
+                "Intercept": np.nan,
+                "R2": np.nan,
+                "p_slope": np.nan,
+                "n_hours": n_hours,
+                "Macro_SD": macro_sd,
+                "CBI_flag": f"macro_sd_lt_{CFG.min_site_month_status_macro_sd:g}",
+            }
+        )
+
+    fit = linregress(data["ERA5_T2m_C"], data["Observed_T15cm_C"])
+    return pd.Series(
+        {
+            "CBI": float(fit.slope),
+            "Intercept": float(fit.intercept),
+            "R2": float(fit.rvalue**2),
+            "p_slope": float(fit.pvalue),
+            "n_hours": n_hours,
+            "Macro_SD": macro_sd,
+            "CBI_flag": "ok",
+        }
+    )
+
+
 # =============================================================================
 # 3. 数据读取与汇总
 # =============================================================================
 
 
-def read_inputs() -> tuple[gpd.GeoDataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """读取边界、站点、事件、CBI 配对和 SPI30d 宽表。
+def read_inputs() -> tuple[
+    gpd.GeoDataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+]:
+    """读取边界、站点、多等级模型结果和五级 CBI 重算底表。
 
     关键处理：
         - 福建边界统一到 EPSG:4326，保证和站点经纬度一致；
         - Site_ID 全部转为字符串，避免跨表合并失败；
         - 日期列和数值列显式转换，减少 Excel/CSV 自动类型推断造成的隐患。
+        - Fig.1A 读取多等级 LMM 结果，不再使用 Extreme-only 事件地图；
+        - Fig.1B-D 直接从完整逐小时 SPI 合并审计表重算五级 SiteMonth CBI。
     """
 
     steps = [
         "检查输入文件",
         "读取福建边界",
         "读取站点坐标",
-        "读取干旱事件表",
-        "读取事件-参考期CBI配对表",
-        "读取SPI30d逐日宽表",
+        "读取完整逐小时SPI合并表",
+        "读取多等级SiteMonth配对审计表",
+        "读取多等级LMM结果表",
         "统一字段类型",
     ]
     with progress_bar("步骤1/5 读取输入数据", len(steps), "cyan") as bar:
         require_files(
             [
                 CFG.sites_csv,
-                CFG.drought_events_csv,
-                CFG.spi_wide_xlsx,
-                CFG.event_pairs_csv,
+                CFG.hourly_spi_merged_csv,
+                CFG.multi_pair_audit_csv,
+                CFG.multi_lmm_summary_csv,
+                CFG.multi_lmm_restricted_csv,
+                CFG.multi_trend_test_csv,
                 CFG.fujian_shp,
             ]
         )
@@ -543,92 +847,172 @@ def read_inputs() -> tuple[gpd.GeoDataFrame, pd.DataFrame, pd.DataFrame, pd.Data
         sites = pd.read_csv(CFG.sites_csv)
         bar.update()
 
-        events = pd.read_csv(CFG.drought_events_csv)
+        hourly = pd.read_csv(
+            CFG.hourly_spi_merged_csv,
+            usecols=[
+                "Site_ID",
+                "YearMonth",
+                "Month",
+                "Site_Month",
+                "ERA5_T2m_C",
+                "Observed_T15cm_C",
+                "Has_Both_Data",
+                "SPI30d",
+            ],
+            low_memory=False,
+        )
         bar.update()
 
-        pairs = pd.read_csv(CFG.event_pairs_csv)
+        pair_audit = pd.read_csv(CFG.multi_pair_audit_csv)
         bar.update()
 
-        spi_wide = pd.read_excel(CFG.spi_wide_xlsx)
+        lmm_summary = pd.read_csv(CFG.multi_lmm_summary_csv)
+        lmm_restricted = pd.read_csv(CFG.multi_lmm_restricted_csv)
+        trend_test = pd.read_csv(CFG.multi_trend_test_csv)
         bar.update()
 
-        for df in (sites, events, pairs):
+        for df in (sites, hourly, pair_audit):
             df["Site_ID"] = df["Site_ID"].map(normalize_site_id)
 
         for col in ["Longitude", "Latitude"]:
             sites[col] = pd.to_numeric(sites[col], errors="coerce")
 
-        events["Start_Date"] = pd.to_datetime(events["Start_Date"], errors="coerce")
-        events["End_Date"] = pd.to_datetime(events["End_Date"], errors="coerce")
-        events["Min_Daily_SPI"] = pd.to_numeric(events["Min_Daily_SPI"], errors="coerce")
+        for col in ["ERA5_T2m_C", "Observed_T15cm_C", "SPI30d"]:
+            hourly[col] = pd.to_numeric(hourly[col], errors="coerce")
 
-        pairs["Start_Date"] = pd.to_datetime(pairs["Start_Date"], errors="coerce")
-        pairs["End_Date"] = pd.to_datetime(pairs["End_Date"], errors="coerce")
-        numeric_pair_cols = [
-            "Duration_Days",
-            "Min_Daily_SPI",
-            "Event_CBI",
-            "Reference_CBI",
-            "Delta_CBI_Event_minus_Reference",
-        ]
-        for col in numeric_pair_cols:
-            pairs[col] = pd.to_numeric(pairs[col], errors="coerce")
+        for col in [
+            "Target_n_hours",
+            "Normal_n_hours_for_pair",
+            "Target_Macro_SD",
+            "Normal_Macro_SD_for_pair",
+        ]:
+            if col in pair_audit.columns:
+                pair_audit[col] = pd.to_numeric(pair_audit[col], errors="coerce")
 
-        first_col = spi_wide.columns[0]
-        spi_wide = spi_wide.rename(columns={first_col: "Date"})
-        spi_wide["Date"] = pd.to_datetime(spi_wide["Date"], errors="coerce")
-        for col in spi_wide.columns:
-            if col != "Date":
-                spi_wide[col] = pd.to_numeric(spi_wide[col], errors="coerce")
+        for col in [
+            "Pass_Hours",
+            "Pass_Target_Macro_SD",
+            "Pass_Normal_Macro_SD",
+            "Pass_Hours_Plus_Macro_SD",
+        ]:
+            pair_audit[col] = pair_audit[col].astype(str).str.lower().isin(["true", "1", "yes"])
         bar.update()
 
-    return boundary, sites, events, pairs, spi_wide
+    return boundary, sites, hourly, pair_audit, lmm_summary, lmm_restricted, trend_test
 
 
 def prepare_data(
     sites: pd.DataFrame,
-    events: pd.DataFrame,
-    pairs: pd.DataFrame,
-    spi_wide: pd.DataFrame,
+    hourly: pd.DataFrame,
+    pair_audit: pd.DataFrame,
+    lmm_summary: pd.DataFrame,
+    lmm_restricted: pd.DataFrame,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """生成 Fig. 1A-D 所需的统计表。
 
     输出含义：
-        - sites_summary：每个站点的极端干旱事件数，用于 Fig. 1A；
-        - extreme_events：所有极端干旱事件，用于审计；
-        - valid_pairs：Pair_flag == ok 的事件-参考期 CBI 配对，用于 Fig. 1B/D；
-        - site_response：按站点汇总的 Delta_CBI 中位数和有效配对数，用于 Fig. 1C/D；
-        - timeline：每日极端干旱站点比例，用于 Fig. 1A 插图。
+        - sites_summary：全部站点坐标，用于 Fig. 1C 背景点；
+        - forest_data：多等级 LMM 主模型和公共支持集模型，用于 Fig. 1A；
+        - valid_pairs：五级 SiteMonth Target-vs-Normal CBI 配对，用于 Fig. 1B/D；
+        - site_response：按站点汇总的五级 Delta_CBI 中位数和有效配对数，用于 Fig. 1C/D；
+
+    关键科学约束：
+        Fig.1B-D 必须展示 Mild/Moderate/Severe/Extreme 四级相对 Normal 的真实
+        SiteMonth CBI，而不是旧 03_站点月份状态CBI估计表中的 Normal/Extreme 子集。
+        因此这里直接从 00_逐小时温度_SPI合并审计表重新分类并估计 CBI，再用
+        03_各等级_SiteMonth_配对审计.csv 的 Pass_Hours_Plus_Macro_SD 作为最终 QC。
     """
 
-    with progress_bar("步骤2/5 清洗并汇总数据", 5, "green") as bar:
-        extreme_events = events.loc[
-            events["Min_Daily_SPI"].le(CFG.extreme_spi_threshold)
-            & events["Start_Date"].notna()
-            & events["End_Date"].notna()
-        ].copy()
+    with progress_bar("步骤2/5 清洗并汇总数据", 8, "green") as bar:
+        sites_summary = sites[["Site_ID", "Longitude", "Latitude"]].copy()
         bar.update()
 
-        extreme_counts = (
-            extreme_events.groupby("Site_ID", as_index=False)
-            .agg(
-                Extreme_events=("Event_ID", "count"),
-                Earliest_event=("Start_Date", "min"),
-                Latest_event=("End_Date", "max"),
-                Min_SPI=("Min_Daily_SPI", "min"),
-            )
+        class_order = ["Mild", "Moderate", "Severe", "Extreme"]
+        main_forest = lmm_summary.loc[lmm_summary["Target_Class"].isin(class_order)].copy()
+        main_forest["Model"] = "Main model"
+        restricted_forest = lmm_restricted.loc[
+            lmm_restricted["Target_Class"].isin(class_order)
+            & lmm_restricted.get("RestrictionVersion", "").eq("All_class_common_month_site")
+        ].copy()
+        if restricted_forest.empty:
+            restricted_forest = lmm_restricted.loc[lmm_restricted["Target_Class"].isin(class_order)].copy()
+        restricted_forest["Model"] = "Common support"
+        forest_data = pd.concat([main_forest, restricted_forest], ignore_index=True)
+        forest_data["Target_Class"] = pd.Categorical(
+            forest_data["Target_Class"], categories=class_order, ordered=True
         )
-        sites_summary = sites.merge(extreme_counts, on="Site_ID", how="left")
-        sites_summary["Extreme_events"] = sites_summary["Extreme_events"].fillna(0).astype(int)
+        forest_data = forest_data.sort_values(["Target_Class", "Model"]).reset_index(drop=True)
         bar.update()
 
-        valid_pairs = pairs.loc[
-            pairs["Pair_flag"].eq("ok")
-            & pairs["Event_CBI"].notna()
-            & pairs["Reference_CBI"].notna()
-            & pairs["Delta_CBI_Event_minus_Reference"].notna()
+        hourly_valid = hourly.loc[
+            hourly["Has_Both_Data"].astype(str).str.lower().isin(["true", "1", "yes"])
+            & hourly["ERA5_T2m_C"].between(-50, 60)
+            & hourly["Observed_T15cm_C"].between(-40, 80)
+            & hourly["SPI30d"].notna()
+            & hourly["Site_ID"].ne("")
+            & hourly["YearMonth"].notna()
         ].copy()
-        valid_pairs = valid_pairs.rename(columns={"Delta_CBI_Event_minus_Reference": "Delta_CBI"})
+        hourly_valid["Drought_Class"] = classify_drought_class(hourly_valid["SPI30d"])
+        hourly_valid = hourly_valid.loc[
+            hourly_valid["Drought_Class"].isin(["Normal", "Mild", "Moderate", "Severe", "Extreme"])
+        ].copy()
+        bar.update()
+
+        site_month_cbi = (
+            hourly_valid.groupby(["Site_ID", "YearMonth", "Month", "Drought_Class"], dropna=False)
+            .apply(estimate_site_month_status_cbi, include_groups=False)
+            .reset_index()
+        )
+        bar.update()
+
+        normal_cbi = site_month_cbi.loc[
+            site_month_cbi["Drought_Class"].eq("Normal") & site_month_cbi["CBI_flag"].eq("ok"),
+            ["Site_ID", "YearMonth", "CBI", "n_hours", "Macro_SD"],
+        ].rename(
+            columns={
+                "CBI": "Normal_CBI",
+                "n_hours": "Normal_n_hours_recomputed",
+                "Macro_SD": "Normal_Macro_SD_recomputed",
+            }
+        )
+        target_cbi = site_month_cbi.loc[
+            site_month_cbi["Drought_Class"].isin(["Mild", "Moderate", "Severe", "Extreme"])
+            & site_month_cbi["CBI_flag"].eq("ok"),
+            ["Site_ID", "YearMonth", "Month", "Drought_Class", "CBI", "n_hours", "Macro_SD"],
+        ].rename(
+            columns={
+                "Drought_Class": "Target_Class",
+                "CBI": "Target_CBI",
+                "n_hours": "Target_n_hours_recomputed",
+                "Macro_SD": "Target_Macro_SD_recomputed",
+            }
+        )
+        valid_pairs = target_cbi.merge(normal_cbi, on=["Site_ID", "YearMonth"], how="inner")
+        valid_pairs["Delta_CBI"] = valid_pairs["Target_CBI"] - valid_pairs["Normal_CBI"]
+        bar.update()
+
+        qc_cols = [
+            "Target_Class",
+            "Target_Class_CN",
+            "Site_ID",
+            "YearMonth",
+            "Target_n_hours",
+            "Normal_n_hours_for_pair",
+            "Target_Macro_SD",
+            "Normal_Macro_SD_for_pair",
+            "Pass_Hours",
+            "Pass_Target_Macro_SD",
+            "Pass_Normal_Macro_SD",
+            "Pass_Hours_Plus_Macro_SD",
+        ]
+        qc = pair_audit.loc[
+            pair_audit["Pass_Hours_Plus_Macro_SD"], [col for col in qc_cols if col in pair_audit.columns]
+        ].drop_duplicates()
+        valid_pairs = valid_pairs.merge(qc, on=["Site_ID", "YearMonth", "Target_Class"], how="inner")
+        valid_pairs["Target_Class"] = pd.Categorical(
+            valid_pairs["Target_Class"], categories=class_order, ordered=True
+        )
+        valid_pairs = valid_pairs.sort_values(["Target_Class", "Site_ID", "YearMonth"]).reset_index(drop=True)
         bar.update()
 
         site_response = (
@@ -636,25 +1020,18 @@ def prepare_data(
             .agg(
                 Median_Delta_CBI=("Delta_CBI", "median"),
                 Mean_Delta_CBI=("Delta_CBI", "mean"),
+                Q25_Delta_CBI=("Delta_CBI", lambda x: x.quantile(0.25)),
+                Q75_Delta_CBI=("Delta_CBI", lambda x: x.quantile(0.75)),
                 N_pairs=("Delta_CBI", "size"),
-                Min_SPI=("Min_Daily_SPI", "min"),
-                Median_duration_days=("Duration_Days", "median"),
+                N_classes=("Target_Class", "nunique"),
+                Median_Target_CBI=("Target_CBI", "median"),
+                Median_Normal_CBI=("Normal_CBI", "median"),
             )
             .merge(sites[["Site_ID", "Longitude", "Latitude"]], on="Site_ID", how="left")
         )
         bar.update()
 
-        spi_cols = [col for col in spi_wide.columns if col != "Date"]
-        timeline = pd.DataFrame({"Date": spi_wide["Date"]})
-        spi_values = spi_wide[spi_cols]
-        timeline["Mean_SPI30d"] = spi_values.mean(axis=1, skipna=True)
-        timeline["Extreme_site_fraction"] = spi_values.le(CFG.extreme_spi_threshold).sum(
-            axis=1
-        ) / spi_values.notna().sum(axis=1)
-        timeline = timeline.loc[timeline["Date"].notna()].copy()
-        bar.update()
-
-    return sites_summary, extreme_events, valid_pairs, site_response, timeline
+    return sites_summary, forest_data, valid_pairs, site_response
 
 
 # =============================================================================
@@ -664,204 +1041,231 @@ def prepare_data(
 
 def draw_panel_a(
     ax: plt.Axes,
-    boundary: gpd.GeoDataFrame,
-    sites_summary: pd.DataFrame,
-    timeline: pd.DataFrame,
+    forest_data: pd.DataFrame,
+    trend_test: pd.DataFrame,
 ) -> None:
-    """Fig. 1A：福建边界、全部站点和极端干旱事件频次。
+    """Fig. 1A：多等级 Delta_CBI 森林图。
 
-    点大小表示每个站点 2025 年满足 SPI30d <= extreme_spi_threshold 的事件数；
-    右下角插图显示每日处于极端干旱的站点比例，用来交代事件发生时间背景。
+    面板任务：
+        - 用主模型回答 Mild/Moderate/Severe/Extreme 是否相对 Normal 改变 CBI；
+        - 用 common-support 限制样本模型提示结果是否受样本构成驱动；
+        - 用等级顺序和 q 值呈现非单调模式，而不额外添加说明框干扰主信息。
     """
 
-    boundary.plot(
-        ax=ax,
-        facecolor=FP.map_facecolor_a,
-        edgecolor=FP.map_edgecolor,
-        linewidth=FP.map_edgewidth,
-        zorder=1,
-    )
-    boundary.boundary.plot(ax=ax, color=FP.map_edgecolor, linewidth=FP.map_edgewidth, zorder=2)
+    class_order = ["Mild", "Moderate", "Severe", "Extreme"]
+    y_positions = np.arange(len(class_order))[::-1]
+    y_map = dict(zip(class_order, y_positions))
+    palette = dict(zip(class_order, FP.drought_level_palette[1:]))
+    main = forest_data.loc[forest_data["Model"].eq("Main model")].copy()
+    restricted = forest_data.loc[forest_data["Model"].eq("Common support")].copy()
 
-    zero = sites_summary["Extreme_events"].eq(0)
-    ax.scatter(
-        sites_summary.loc[zero, "Longitude"],
-        sites_summary.loc[zero, "Latitude"],
-        s=FP.panel_a_zero_site_size,
-        c=FP.panel_a_zero_site_color,
-        edgecolors="white",
-        linewidths=0.4,
-        zorder=3,
-    )
-
-    affected = sites_summary.loc[~zero].copy()
-    max_events = float(affected["Extreme_events"].max()) if not affected.empty else 1.0
-    point_sizes = size_from_count(
-        affected["Extreme_events"],
-        FP.panel_a_event_size_min,
-        FP.panel_a_event_size_max,
-        vmax=max_events,
-    )
-    ax.scatter(
-        affected["Longitude"],
-        affected["Latitude"],
-        s=point_sizes,
-        c=affected["Extreme_events"],
-        cmap=FP.panel_a_event_cmap,
-        vmin=1,
-        vmax=max(1, int(affected["Extreme_events"].max())),
-        edgecolors=FP.panel_a_event_edgecolor,
-        linewidths=FP.panel_a_event_linewidth,
-        alpha=FP.panel_a_event_alpha,
-        zorder=4,
-    )
-
-    bounds = boundary.total_bounds
-    dx = bounds[2] - bounds[0]
-    dy = bounds[3] - bounds[1]
-    ax.set_xlim(bounds[0] - dx * FP.map_padding_fraction, bounds[2] + dx * FP.map_padding_fraction)
-    ax.set_ylim(bounds[1] - dy * FP.map_padding_fraction, bounds[3] + dy * FP.map_padding_fraction)
-    apply_lon_lat_tick_format(ax)
-    ax.set_xlabel("Longitude")
-    ax.set_ylabel("Latitude")
-    ax.set_title("A  Extreme drought events and monitoring sites", loc="left", fontweight="bold")
-
-    legend_counts = sorted(set(affected["Extreme_events"].astype(int)))
-    if len(legend_counts) > 3:
-        legend_counts = [legend_counts[0], int(np.median(legend_counts)), legend_counts[-1]]
-    handles = [
-        Line2D(
-            [0],
-            [0],
-            marker="o",
-            linestyle="None",
-            markerfacecolor="#f26d3d",
-            markeredgecolor=FP.panel_a_event_edgecolor,
-            markersize=np.sqrt(
-                size_from_count(
-                    np.array([count]),
-                    FP.panel_a_event_size_min,
-                    FP.panel_a_event_size_max,
-                    vmax=max_events,
-                )[0]
-            )
-            / 1.35,
-            label=str(count),
+    ax.axvline(0, color=FP.panel_a_zero_line_color, linestyle="--", lw=0.9, zorder=1)
+    for _, row in restricted.iterrows():
+        drought_class = str(row["Target_Class"])
+        y = y_map[drought_class] - 0.12
+        x = row["DeltaCBI_Target_minus_Normal"]
+        ax.scatter(
+            x,
+            y,
+            marker="s",
+            s=FP.panel_a_restricted_marker_size,
+            facecolors="none",
+            edgecolors=palette[drought_class],
+            linewidths=0.9,
+            alpha=FP.panel_a_restricted_alpha,
+            zorder=2,
         )
-        for count in legend_counts
-    ]
+
+    for _, row in main.iterrows():
+        drought_class = str(row["Target_Class"])
+        y = y_map[drought_class] + 0.12
+        x = row["DeltaCBI_Target_minus_Normal"]
+        ax.errorbar(
+            x,
+            y,
+            xerr=[
+                [x - row["DeltaCBI_CI_low_95"]],
+                [row["DeltaCBI_CI_high_95"] - x],
+            ],
+            fmt="o",
+            ms=np.sqrt(FP.panel_a_marker_size),
+            color=palette[drought_class],
+            markeredgecolor="#1a1a1a",
+            ecolor=palette[drought_class],
+            elinewidth=FP.panel_a_ci_linewidth,
+            capsize=4,
+            zorder=3,
+        )
+
+    for _, row in main.iterrows():
+        drought_class = str(row["Target_Class"])
+        y = y_map[drought_class] + 0.12
+        q = row.get("DeltaCBI_p_FDR", np.nan)
+        ax.text(
+            row["DeltaCBI_Target_minus_Normal"],
+            y + 0.24,
+            f"n_site={int(row['n_sites'])}, q{format_compact_p(q)}",
+            ha="center",
+            va="bottom",
+            fontsize=FP.panel_a_text_size,
+        )
+
+    ax.set_yticks(y_positions)
+    ax.set_yticklabels(class_order)
+    ax.set_xlabel("ΔCBI (drought class - Normal)")
+    ax.set_ylabel("Drought class")
+    set_panel_title(ax, "A", "Multi-level drought effects on CBI")
+    # x 轴范围只按图上实际强调的信息确定：主模型 95% CI + common-support 方块点。
+    # 不使用 common-support 的 CI，否则会被未显示的宽置信区间拉出大块空白。
+    x_extent_values = pd.concat(
+        [
+            pd.to_numeric(main["DeltaCBI_CI_low_95"], errors="coerce"),
+            pd.to_numeric(main["DeltaCBI_CI_high_95"], errors="coerce"),
+            pd.to_numeric(restricted["DeltaCBI_Target_minus_Normal"], errors="coerce"),
+        ],
+        ignore_index=True,
+    ).dropna()
+    ci_min = x_extent_values.min()
+    ci_max = x_extent_values.max()
+    ci_span = ci_max - ci_min
+    if not np.isfinite(ci_span) or ci_span <= 0:
+        ci_min, ci_max, ci_span = -0.02, 0.08, 0.10
+    ax.set_xlim(
+        ci_min - ci_span * FP.panel_a_xlim_left_padding_fraction,
+        ci_max + ci_span * FP.panel_a_xlim_right_padding_fraction,
+    )
+    ax.set_ylim(-0.65, len(class_order) - 0.35)
     ax.legend(
-        handles=handles,
-        title="Extreme events",
+        handles=[
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                linestyle="None",
+                markerfacecolor="#555555",
+                markeredgecolor="#1a1a1a",
+                markersize=6,
+                label="Main model (all valid pairs)",
+            ),
+            Line2D(
+                [0],
+                [0],
+                marker="s",
+                linestyle="None",
+                markerfacecolor="none",
+                markeredgecolor="#555555",
+                markersize=6,
+                label="Common support subset",
+            ),
+        ],
         frameon=False,
         loc=FP.panel_a_legend_loc,
         bbox_to_anchor=(FP.panel_a_legend_anchor_x, FP.panel_a_legend_anchor_y),
-        borderaxespad=0.0,
+        borderaxespad=0,
     )
-
-    inset = ax.inset_axes(
-        [
-            FP.panel_a_inset_x,
-            FP.panel_a_inset_y,
-            FP.panel_a_inset_width,
-            FP.panel_a_inset_height,
-        ]
-    )
-    inset.fill_between(
-        timeline["Date"],
-        timeline["Extreme_site_fraction"] * 100,
-        color=FP.panel_a_timeline_fill_color,
-        alpha=FP.panel_a_timeline_fill_alpha,
-        linewidth=0,
-    )
-    inset.plot(
-        timeline["Date"],
-        timeline["Extreme_site_fraction"] * 100,
-        color=FP.panel_a_timeline_line_color,
-        linewidth=FP.panel_a_timeline_linewidth,
-    )
-    inset.set_ylabel("% sites", fontsize=FP.panel_a_inset_label_size)
-    inset.set_xlabel("2025", fontsize=FP.panel_a_inset_label_size)
-    inset.set_title("Extreme-drought footprint", fontsize=FP.panel_a_inset_title_size, pad=2)
-    inset.tick_params(axis="both", labelsize=FP.panel_a_inset_tick_size, length=2)
-    inset.xaxis.set_major_locator(mdates.MonthLocator(interval=FP.panel_a_timeline_month_interval))
-    inset.xaxis.set_major_formatter(mdates.DateFormatter("%b"))
-    inset.set_ylim(bottom=0)
-    for spine in inset.spines.values():
-        spine.set_linewidth(0.5)
 
 
 def draw_panel_b(ax: plt.Axes, valid_pairs: pd.DataFrame, delta_norm: TwoSlopeNorm) -> None:
-    """Fig. 1B：事件期 CBI 与参考期 CBI 的配对散点图。
+    """Fig. 1B：五级 SiteMonth 绝对 CBI 分布。
 
-    y = x 虚线表示事件期和参考期 CBI 相同；点在虚线上方表示事件期 CBI 更高。
-    点颜色为 Delta_CBI，点大小随干旱持续时间变化，插图显示 Delta_CBI 分布。
+    该面板保留绝对 CBI 尺度，而不是只画 Delta_CBI：
+        - CBI 越接近 1，林内 15 cm 温度越跟随 ERA5 2 m 宏气候温度，缓冲越弱；
+        - CBI=1 参考线用于帮助读者判断 0.01-0.03 的变化是否具有物理意义；
+        - Normal 样本来自所有有效 Target-vs-Normal 配对的参考状态，可能重复出现，
+          这是有意保留的配对权重表达，保证和 Delta_CBI 配对底表一致。
     """
 
-    durations = valid_pairs["Duration_Days"].fillna(valid_pairs["Duration_Days"].median())
-    size = FP.panel_b_point_size_min + (
-        (FP.panel_b_point_size_max - FP.panel_b_point_size_min)
-        * (durations - durations.min())
-        / max(1, durations.max() - durations.min())
+    normal_data = (
+        valid_pairs[["Site_ID", "YearMonth", "Normal_CBI"]]
+        .drop_duplicates(["Site_ID", "YearMonth"])
+        .rename(columns={"Normal_CBI": "CBI"})
     )
-    ax.scatter(
-        valid_pairs["Reference_CBI"],
-        valid_pairs["Event_CBI"],
-        c=valid_pairs["Delta_CBI"],
-        s=size,
-        cmap=FP.delta_cmap,
-        norm=delta_norm,
-        edgecolors=FP.panel_b_point_edgecolor,
-        linewidths=FP.panel_b_point_linewidth,
-        alpha=FP.panel_b_point_alpha,
-    )
+    normal_data["Status"] = "Normal"
+    normal_data["Delta_CBI"] = np.nan
+    target_data = valid_pairs[
+        ["Site_ID", "YearMonth", "Target_CBI", "Target_Class", "Delta_CBI"]
+    ].rename(columns={"Target_CBI": "CBI", "Target_Class": "Status"})
+    box_data = pd.concat([normal_data, target_data], ignore_index=True)
+    order = ["Normal", "Mild", "Moderate", "Severe", "Extreme"]
+    palette = dict(zip(order, FP.drought_level_palette))
 
-    low = float(np.nanmin(valid_pairs[["Reference_CBI", "Event_CBI"]].to_numpy()))
-    high = float(np.nanmax(valid_pairs[["Reference_CBI", "Event_CBI"]].to_numpy()))
-    pad = (high - low) * FP.panel_b_axis_padding_fraction if high > low else 0.1
-    ax.plot(
-        [low - pad, high + pad],
-        [low - pad, high + pad],
-        FP.panel_b_identity_linestyle,
-        color=FP.panel_b_identity_line_color,
+    grouped = [box_data.loc[box_data["Status"].eq(status), "CBI"].dropna().to_numpy() for status in order]
+    positions = np.arange(len(order))
+    box = ax.boxplot(
+        grouped,
+        positions=positions,
+        widths=0.52,
+        patch_artist=True,
+        showfliers=False,
+        medianprops={"color": "#111111", "linewidth": 1.2},
+        boxprops={"linewidth": 0.8, "color": "#333333"},
+        whiskerprops={"linewidth": 0.8, "color": "#333333"},
+        capprops={"linewidth": 0.8, "color": "#333333"},
+    )
+    for patch, status in zip(box["boxes"], order):
+        patch.set_facecolor(palette[status])
+        patch.set_alpha(0.38 if status == "Normal" else 0.52)
+
+    rng = np.random.default_rng(FP.panel_b_jitter_seed)
+    for idx, status in enumerate(order):
+        subset = box_data.loc[box_data["Status"].eq(status)].copy()
+        if subset.empty:
+            continue
+        x = idx + rng.uniform(-FP.panel_b_jitter_half_width, FP.panel_b_jitter_half_width, len(subset))
+        ax.scatter(
+            x,
+            subset["CBI"],
+            s=FP.panel_b_point_size_min,
+            facecolors=palette[status],
+            edgecolors=FP.panel_b_point_edgecolor if status != "Normal" else "#9a9a9a",
+            linewidths=FP.panel_b_point_linewidth,
+            alpha=0.42 if status == "Normal" else FP.panel_b_point_alpha,
+            zorder=3,
+        )
+
+    label_y_values: list[float] = []
+    all_cbi = pd.to_numeric(box_data["CBI"], errors="coerce").dropna()
+    y_span = float(all_cbi.max() - all_cbi.min()) if not all_cbi.empty else 1.0
+    label_offset = max(y_span * FP.panel_b_median_label_offset_fraction, 0.010)
+    for idx, status in enumerate(order):
+        values = box_data.loc[box_data["Status"].eq(status), "CBI"].dropna()
+        if values.empty:
+            continue
+        upper_cap = box["caps"][2 * idx + 1]
+        upper_anchor = float(np.max(upper_cap.get_ydata()))
+        median_value = float(values.median())
+        label_y = upper_anchor + label_offset
+        label_y_values.append(label_y)
+        ax.text(
+            idx,
+            label_y,
+            f"median = {median_value:.2f}",
+            ha="center",
+            va="bottom",
+            fontsize=FP.panel_b_median_label_size,
+            color=FP.panel_b_median_label_color,
+            zorder=7,
+        )
+
+    ax.axhline(
+        FP.panel_b_reference_line_value,
+        color=FP.panel_b_reference_line_color,
+        linestyle="--",
         lw=FP.panel_b_identity_linewidth,
+        zorder=1,
     )
-    ax.set_xlim(low - pad, high + pad)
-    ax.set_ylim(low - pad, high + pad)
-    ax.set_xlabel("Reference-period CBI")
-    ax.set_ylabel("Extreme-event CBI")
-    ax.set_title("B  Event-period CBI shifted from reference conditions", loc="left", fontweight="bold")
-    ax.text(
-        0.04,
-        0.76,
-        f"n = {len(valid_pairs)} event-site pairs\n"
-        f"median ΔCBI = {valid_pairs['Delta_CBI'].median():.3f}",
-        transform=ax.transAxes,
-        ha="left",
-        va="top",
-        fontsize=8,
-        bbox={
-            "boxstyle": "round,pad=0.28",
-            "fc": "white",
-            "ec": "#d0d0d0",
-            "lw": 0.6,
-            "alpha": 0.88,
-        },
-    )
-
-    inset = ax.inset_axes([0.63, 0.08, 0.32, 0.28])
-    inset.hist(
-        valid_pairs["Delta_CBI"],
-        bins=FP.panel_b_hist_bins,
-        color=FP.panel_b_hist_color,
-        alpha=FP.panel_b_hist_alpha,
-        edgecolor="white",
-    )
-    inset.axvline(0, color=FP.panel_b_hist_zero_line_color, lw=FP.panel_b_hist_zero_linewidth)
-    inset.set_title("ΔCBI", fontsize=7, pad=1)
-    inset.tick_params(axis="both", labelsize=6, length=2)
-    for spine in inset.spines.values():
-        spine.set_linewidth(0.5)
+    counts = box_data.groupby("Status").size()
+    xlabels = [f"{status}\n(n={int(counts.get(status, 0))})" for status in order]
+    ax.set_xticks(positions)
+    ax.set_xticklabels(xlabels, rotation=0, ha="center")
+    ax.set_xlabel("SPI30d class")
+    ax.set_ylabel("Site-month CBI")
+    if label_y_values:
+        ymin, ymax = ax.get_ylim()
+        required_top = max(label_y_values) + label_offset * 2.5
+        if required_top > ymax:
+            ax.set_ylim(ymin, required_top)
+    set_panel_title(ax, "B", "Absolute CBI distributions across drought classes")
 
 
 def draw_panel_c(
@@ -874,7 +1278,7 @@ def draw_panel_c(
     """Fig. 1C：站点尺度中位数 Delta_CBI 的空间分布图。
 
     底图灰点显示全部站点；有有效事件-参考期配对的站点按中位数 Delta_CBI 着色，
-    点大小表示有效配对数量 n。
+    点大小固定，避免样本量差异干扰空间结构判断；N_pairs 只写入输出表和图注。
     """
 
     boundary.plot(
@@ -893,18 +1297,12 @@ def draw_panel_c(
         linewidths=0.35,
         zorder=2,
     )
-    max_pairs = float(site_response["N_pairs"].max()) if not site_response.empty else 1.0
-    sizes = size_from_count(
-        site_response["N_pairs"],
-        FP.panel_c_response_size_min,
-        FP.panel_c_response_size_max,
-        vmax=max_pairs,
-    )
+    plot_sites = site_response.sort_values("Median_Delta_CBI", ascending=True).copy()
     ax.scatter(
-        site_response["Longitude"],
-        site_response["Latitude"],
-        s=sizes,
-        c=site_response["Median_Delta_CBI"],
+        plot_sites["Longitude"],
+        plot_sites["Latitude"],
+        s=FP.panel_c_response_size,
+        c=plot_sites["Median_Delta_CBI"],
         cmap=FP.delta_cmap,
         norm=delta_norm,
         edgecolors=FP.panel_c_response_edgecolor,
@@ -921,65 +1319,26 @@ def draw_panel_c(
     apply_lon_lat_tick_format(ax)
     ax.set_xlabel("Longitude")
     ax.set_ylabel("Latitude")
-    ax.set_title("C  Spatially structured median responses", loc="left", fontweight="bold")
-
-    legend_counts = sorted(set(site_response["N_pairs"].astype(int)))
-    if len(legend_counts) > 3:
-        legend_counts = [legend_counts[0], int(np.median(legend_counts)), legend_counts[-1]]
-    handles = [
-        Line2D(
-            [0],
-            [0],
-            marker="o",
-            linestyle="None",
-            markerfacecolor="#d9d9d9",
-            markeredgecolor=FP.panel_c_response_edgecolor,
-            markersize=np.sqrt(
-                size_from_count(
-                    np.array([count]),
-                    FP.panel_c_response_size_min,
-                    FP.panel_c_response_size_max,
-                    vmax=max_pairs,
-                )[0]
-            )
-            / 1.3,
-            label=str(count),
-        )
-        for count in legend_counts
-    ]
-    ax.legend(
-        handles=handles,
-        title="Valid pairs",
-        frameon=False,
-        loc=FP.panel_c_legend_loc,
-        bbox_to_anchor=(FP.panel_c_legend_anchor_x, FP.panel_c_legend_anchor_y),
-        borderaxespad=0,
-    )
+    set_panel_title(ax, "C", "Spatial distribution of median responses")
 
 
 def draw_panel_d(
     ax: plt.Axes,
-    valid_pairs: pd.DataFrame,
     site_response: pd.DataFrame,
-) -> mpl.collections.PathCollection:
-    """Fig. 1D：按站点中位数排序的事件级 Delta_CBI 点图。
+    site_delta_norm: TwoSlopeNorm,
+    site_delta_limit: float,
+) -> None:
+    """Fig. 1D：站点中位数 Delta_CBI 的棒棒糖排序图。
 
-    横轴为单个事件-站点配对的 Delta_CBI；白色菱形表示站点中位数；
-    点颜色表示该事件的最低 SPI30d，用来保留事件强度信息。
+    每一行代表一个有五级有效配对的站点；横向线段从 Delta_CBI=0 延伸到该站点
+    的 Median_Delta_CBI，端点颜色与 Fig.1C 一致。该设计牺牲事件级散点细节，
+    换取更清晰的站点差异排序；N_pairs 继续保存在输出表和图注中。
     """
 
     ordered = site_response.sort_values("Median_Delta_CBI", ascending=True).reset_index(drop=True)
-    site_to_y = {site: i for i, site in enumerate(ordered["Site_ID"])}
-    plot_data = valid_pairs.loc[valid_pairs["Site_ID"].isin(site_to_y)].copy()
-    plot_data["y"] = plot_data["Site_ID"].map(site_to_y).astype(float)
-
-    rng = np.random.default_rng(FP.panel_d_jitter_seed)
-    plot_data["jitter"] = rng.uniform(-FP.panel_d_jitter_half_width, FP.panel_d_jitter_half_width, len(plot_data))
-    spi_norm = Normalize(
-        vmin=float(plot_data["Min_Daily_SPI"].min()),
-        vmax=float(plot_data["Min_Daily_SPI"].max()),
-    )
-    cmap = mpl.colormaps[FP.panel_d_spi_cmap]
+    y_positions = np.arange(len(ordered))
+    x_values = pd.to_numeric(ordered["Median_Delta_CBI"], errors="coerce").to_numpy()
+    point_cmap = plt.get_cmap(FP.delta_cmap)
 
     ax.axvline(
         0,
@@ -988,56 +1347,559 @@ def draw_panel_d(
         linestyle=FP.panel_d_zero_linestyle,
         zorder=1,
     )
-    sc = ax.scatter(
-        plot_data["Delta_CBI"],
-        plot_data["y"] + plot_data["jitter"],
-        c=plot_data["Min_Daily_SPI"],
-        cmap=cmap,
-        norm=spi_norm,
-        s=FP.panel_d_event_point_size,
-        alpha=FP.panel_d_event_point_alpha,
-        edgecolors=FP.panel_d_event_edgecolor,
-        linewidths=FP.panel_d_event_linewidth,
-        zorder=2,
-    )
+    for y, x in zip(y_positions, x_values):
+        ax.hlines(
+            y,
+            min(0, x),
+            max(0, x),
+            color=point_cmap(site_delta_norm(x)),
+            lw=FP.panel_d_lollipop_linewidth,
+            alpha=FP.panel_d_lollipop_alpha,
+            zorder=2,
+        )
 
     ax.scatter(
-        ordered["Median_Delta_CBI"],
-        np.arange(len(ordered)),
-        marker=FP.panel_d_site_median_marker,
+        x_values,
+        y_positions,
+        marker="o",
         s=FP.panel_d_site_median_size,
-        c=FP.panel_d_site_median_facecolor,
+        c=x_values,
+        cmap=FP.delta_cmap,
+        norm=site_delta_norm,
         edgecolors=FP.panel_d_site_median_edgecolor,
         linewidths=FP.panel_d_site_median_linewidth,
-        zorder=4,
-        label="Site median",
+        zorder=3,
     )
-    for y in range(len(ordered)):
-        ax.hlines(y, -1, 1, color=FP.panel_d_row_line_color, lw=FP.panel_d_row_linewidth, zorder=0)
-
-    xlim = finite_symmetric_limit(valid_pairs["Delta_CBI"], fallback=0.25)
-    ax.set_xlim(-xlim, xlim)
-    ax.set_ylim(-0.75, len(ordered) - 0.25)
-    ax.set_yticks(np.arange(len(ordered)))
-    ax.set_yticklabels(ordered["Site_ID"], fontsize=FP.panel_d_site_label_size)
-    ax.set_xlabel("ΔCBI (event - reference)")
-    ax.set_ylabel("Site ordered by median ΔCBI")
-    ax.set_title("D  Site heterogeneity persisted within events", loc="left", fontweight="bold")
-
-    right_x = ax.get_xlim()[1]
-    offset = (ax.get_xlim()[1] - ax.get_xlim()[0]) * FP.panel_d_n_label_offset_fraction
-    for _, row in ordered.iterrows():
-        ax.text(
-            right_x + offset,
-            site_to_y[row["Site_ID"]],
-            f"n={int(row['N_pairs'])}",
-            va="center",
-            ha="left",
-            fontsize=FP.panel_d_n_label_fontsize,
-            clip_on=False,
+    for y in y_positions:
+        ax.hlines(
+            y,
+            -site_delta_limit,
+            site_delta_limit,
+            color=FP.panel_d_row_line_color,
+            lw=FP.panel_d_row_linewidth,
+            zorder=0,
         )
-    ax.legend(frameon=False, loc="upper left")
-    return sc
+
+    label_count = max(0, int(FP.panel_d_extreme_label_count))
+    label_indices = set(ordered.head(label_count).index).union(set(ordered.tail(label_count).index))
+    x_offset = site_delta_limit * 0.025
+    for idx in sorted(label_indices):
+        row = ordered.loc[idx]
+        x = float(row["Median_Delta_CBI"])
+        ha = "left" if x >= 0 else "right"
+        ax.text(
+            x + (x_offset if x >= 0 else -x_offset),
+            idx,
+            str(row["Site_ID"]),
+            va="center",
+            ha=ha,
+            fontsize=FP.panel_d_site_label_size,
+            color="#222222",
+        )
+
+    ax.set_xlim(-site_delta_limit, site_delta_limit)
+    ax.set_ylim(-0.75, len(ordered) - 0.25)
+    ax.set_yticks(y_positions)
+    ax.set_yticklabels([str(i + 1) for i in y_positions], fontsize=FP.tick_label_size)
+    ax.set_xlabel("Site median ΔCBI (drought class - Normal)")
+    ax.set_ylabel("Site rank")
+    set_panel_title(ax, "D", "Ranked site-level response magnitude")
+
+
+def draw_panel_a_optimized(
+    ax: plt.Axes,
+    forest_data: pd.DataFrame,
+    trend_test: pd.DataFrame,
+) -> None:
+    """优化版 Fig. 1A：主模型森林图，common-support 仅作为 inset 稳健性对照。
+
+    主面板只展示 Main model 的效应量、95% CI、n_sites 和 FDR q，避免 common-support
+    点估计偏大时干扰主结论。inset 只回答“限制公共支持集后方向和量级是否一致”。
+    """
+
+    class_order = ["Mild", "Moderate", "Severe", "Extreme"]
+    y_positions = np.arange(len(class_order))[::-1]
+    y_map = dict(zip(class_order, y_positions))
+    palette = dict(zip(class_order, FP.drought_level_palette[1:]))
+    main = forest_data.loc[forest_data["Model"].eq("Main model")].copy()
+    restricted = forest_data.loc[forest_data["Model"].eq("Common support")].copy()
+
+    ax.axvline(0, color=FP.panel_a_zero_line_color, linestyle="--", lw=0.9, zorder=1)
+    for _, row in main.iterrows():
+        drought_class = str(row["Target_Class"])
+        y = y_map[drought_class]
+        x = row["DeltaCBI_Target_minus_Normal"]
+        ax.errorbar(
+            x,
+            y,
+            xerr=[
+                [x - row["DeltaCBI_CI_low_95"]],
+                [row["DeltaCBI_CI_high_95"] - x],
+            ],
+            fmt="o",
+            ms=np.sqrt(FP.panel_a_marker_size),
+            color=palette[drought_class],
+            markeredgecolor="#1a1a1a",
+            ecolor=palette[drought_class],
+            elinewidth=FP.panel_a_ci_linewidth,
+            capsize=4,
+            zorder=3,
+        )
+        q = row.get("DeltaCBI_p_FDR", np.nan)
+        ax.text(
+            x,
+            y + 0.24,
+            f"n_site={int(row['n_sites'])}, q{format_compact_p(q)}",
+            ha="center",
+            va="bottom",
+            fontsize=FP.panel_a_text_size,
+        )
+
+    main_extent = pd.concat(
+        [
+            pd.to_numeric(main["DeltaCBI_CI_low_95"], errors="coerce"),
+            pd.to_numeric(main["DeltaCBI_CI_high_95"], errors="coerce"),
+        ],
+        ignore_index=True,
+    ).dropna()
+    ci_min = float(main_extent.min()) if not main_extent.empty else -0.02
+    ci_max = float(main_extent.max()) if not main_extent.empty else 0.08
+    ci_span = ci_max - ci_min
+    if not np.isfinite(ci_span) or ci_span <= 0:
+        ci_min, ci_max, ci_span = -0.02, 0.08, 0.10
+    ax.set_xlim(
+        ci_min - ci_span * FP.panel_a_xlim_left_padding_fraction,
+        ci_max + ci_span * FP.panel_a_xlim_right_padding_fraction,
+    )
+    ax.set_ylim(-0.65, len(class_order) - 0.35)
+    ax.set_yticks(y_positions)
+    ax.set_yticklabels(class_order)
+    ax.set_xlabel("ΔCBI (drought class - Normal)")
+    ax.set_ylabel("Drought class")
+    set_panel_title(ax, "A", "Model-estimated drought effects")
+
+    if not restricted.empty:
+        inset = ax.inset_axes([0.64, 0.33, 0.30, 0.34])
+        merged = main[["Target_Class", "DeltaCBI_Target_minus_Normal"]].merge(
+            restricted[["Target_Class", "DeltaCBI_Target_minus_Normal"]],
+            on="Target_Class",
+            how="inner",
+            suffixes=("_main", "_common"),
+        )
+        x = np.arange(len(merged))
+        inset.axhline(0, color="#777777", linestyle="--", lw=0.7, zorder=1)
+        for idx, row in merged.iterrows():
+            main_x = row["DeltaCBI_Target_minus_Normal_main"]
+            common_x = row["DeltaCBI_Target_minus_Normal_common"]
+            inset.plot([idx, idx], [main_x, common_x], color="#b0b0b0", lw=0.8, zorder=1)
+        inset.scatter(
+            x - 0.05,
+            merged["DeltaCBI_Target_minus_Normal_main"],
+            marker="o",
+            s=14,
+            color="#444444",
+            edgecolors="#222222",
+            linewidths=0.4,
+            label="Main",
+            zorder=3,
+        )
+        inset.scatter(
+            x + 0.05,
+            merged["DeltaCBI_Target_minus_Normal_common"],
+            marker="s",
+            s=13,
+            facecolors="none",
+            edgecolors="#999999",
+            linewidths=0.8,
+            label="Common",
+            zorder=2,
+        )
+        inset.set_xticks(x)
+        inset.set_xticklabels(["Mi", "Mo", "Se", "Ex"], fontsize=6)
+        inset.tick_params(axis="y", labelsize=6, length=2)
+        inset.tick_params(axis="x", length=2)
+        inset.set_title("Sensitivity", fontsize=7, pad=2)
+        inset.legend(
+            frameon=False,
+            fontsize=5.8,
+            loc="upper center",
+            bbox_to_anchor=(0.5, 1.0),
+            ncol=2,
+            handlelength=1.4,
+            columnspacing=0.8,
+            borderaxespad=0,
+        )
+        for spine in inset.spines.values():
+            spine.set_linewidth(0.6)
+
+
+def draw_panel_d_optimized(
+    ax: plt.Axes,
+    site_response: pd.DataFrame,
+    site_delta_norm: TwoSlopeNorm,
+    site_delta_limit: float,
+) -> None:
+    """优化版 Fig. 1D：站点中位 Delta_CBI + IQR 排序图。
+
+    点表示站点中位响应；横向区间表示站点内有效配对 Delta_CBI 的 25%-75% 分位数。
+    相比棒棒糖图，该面板同时传递站点排序和站点内部响应稳定性。
+    """
+
+    ordered = site_response.sort_values("Median_Delta_CBI", ascending=True).reset_index(drop=True)
+    y_positions = np.arange(len(ordered))
+    median = pd.to_numeric(ordered["Median_Delta_CBI"], errors="coerce").to_numpy()
+    q25 = pd.to_numeric(ordered["Q25_Delta_CBI"], errors="coerce").to_numpy()
+    q75 = pd.to_numeric(ordered["Q75_Delta_CBI"], errors="coerce").to_numpy()
+    iqr_limit = finite_symmetric_limit_with_padding(
+        pd.Series(np.concatenate([median, q25, q75])),
+        fallback=site_delta_limit,
+        padding=FP.panel_d_iqr_axis_padding,
+    )
+
+    ax.axvline(
+        0,
+        color=FP.panel_d_zero_line_color,
+        lw=FP.panel_d_zero_linewidth,
+        linestyle=FP.panel_d_zero_linestyle,
+        zorder=1,
+    )
+    for y, lo, hi, med in zip(y_positions, q25, q75, median):
+        ax.hlines(
+            y,
+            lo,
+            hi,
+            color=plt.get_cmap(FP.delta_cmap)(site_delta_norm(med)),
+            lw=FP.panel_d_iqr_linewidth,
+            alpha=FP.panel_d_iqr_alpha,
+            zorder=2,
+        )
+    ax.scatter(
+        median,
+        y_positions,
+        marker="o",
+        s=FP.panel_d_site_median_size,
+        c=median,
+        cmap=FP.delta_cmap,
+        norm=site_delta_norm,
+        edgecolors=FP.panel_d_site_median_edgecolor,
+        linewidths=FP.panel_d_site_median_linewidth,
+        zorder=3,
+    )
+    for y in y_positions:
+        ax.hlines(
+            y,
+            -iqr_limit,
+            iqr_limit,
+            color=FP.panel_d_row_line_color,
+            lw=FP.panel_d_row_linewidth,
+            zorder=0,
+        )
+
+    ax.set_xlim(-iqr_limit, iqr_limit)
+    ax.set_ylim(-0.75, len(ordered) - 0.25)
+    ax.set_yticks(y_positions)
+    ax.set_yticklabels([str(i + 1) for i in y_positions], fontsize=FP.tick_label_size)
+    ax.set_xlabel("Site-level ΔCBI (median and IQR)")
+    ax.set_ylabel("Site rank")
+    set_panel_title(ax, "D", "Ranked site-level median and IQR")
+    ax.legend(
+        handles=[
+            Line2D([0], [0], color="#777777", lw=FP.panel_d_iqr_linewidth, label="IQR"),
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                linestyle="None",
+                markerfacecolor="#cccccc",
+                markeredgecolor=FP.panel_d_site_median_edgecolor,
+                markersize=5,
+                label="Median",
+            ),
+        ],
+        frameon=True,
+        facecolor="white",
+        edgecolor="none",
+        framealpha=0.72,
+        loc="lower right",
+        fontsize=FP.legend_font_size,
+    )
+
+
+def add_panel_c_colorbar(fig: plt.Figure, ax_c: plt.Axes, site_delta_norm: TwoSlopeNorm) -> None:
+    """给 Fig.1C 添加与 C/D 共享的站点中位 Delta_CBI 色标。"""
+
+    cax_delta_c = ax_c.inset_axes(
+        [
+            FP.panel_c_delta_colorbar_x,
+            FP.panel_c_delta_colorbar_y,
+            FP.panel_c_delta_colorbar_width,
+            FP.panel_c_delta_colorbar_height,
+        ]
+    )
+    cbar_delta_c = fig.colorbar(
+        mpl.cm.ScalarMappable(norm=site_delta_norm, cmap=FP.delta_cmap),
+        cax=cax_delta_c,
+        orientation="horizontal",
+    )
+    cbar_delta_c.set_label("Median ΔCBI (class - Normal)", labelpad=1, fontsize=FP.colorbar_label_size)
+    cbar_delta_c.ax.xaxis.set_label_position("top")
+    cbar_delta_c.ax.tick_params(labelsize=FP.colorbar_tick_size, length=2)
+
+
+def draw_panel_a_absolute(
+    ax: plt.Axes,
+    valid_pairs: pd.DataFrame,
+    forest_data: pd.DataFrame,
+) -> None:
+    """绝对 CBI 对比版 Fig.1A：每个干旱等级内的 Normal vs drought 成对对比。"""
+
+    class_order = ["Mild", "Moderate", "Severe", "Extreme"]
+    class_to_x = dict(zip(class_order, np.arange(len(class_order), dtype=float)))
+    rng = np.random.default_rng(FP.absolute_panel_a_jitter_seed)
+    main = forest_data.loc[forest_data["Model"].eq("Main model")].copy()
+
+    for drought_class in class_order:
+        subset = valid_pairs.loc[valid_pairs["Target_Class"].astype(str).eq(drought_class)].copy()
+        if subset.empty:
+            continue
+        center = class_to_x[drought_class]
+        x_normal = center - 0.18
+        x_drought = center + 0.18
+        normal_values = pd.to_numeric(subset["Normal_CBI"], errors="coerce").dropna().to_numpy()
+        drought_values = pd.to_numeric(subset["Target_CBI"], errors="coerce").dropna().to_numpy()
+
+        pair_sample = subset.sample(
+            n=min(len(subset), 80),
+            random_state=FP.absolute_panel_a_jitter_seed,
+        )
+        for _, row in pair_sample.iterrows():
+            ax.plot(
+                [x_normal, x_drought],
+                [row["Normal_CBI"], row["Target_CBI"]],
+                color=FP.absolute_panel_a_pair_line_color,
+                alpha=FP.absolute_panel_a_pair_line_alpha,
+                lw=FP.absolute_panel_a_pair_linewidth,
+                zorder=1,
+            )
+
+        box = ax.boxplot(
+            [normal_values, drought_values],
+            positions=[x_normal, x_drought],
+            widths=FP.absolute_panel_a_box_width,
+            patch_artist=True,
+            showfliers=False,
+            medianprops={"color": "#111111", "linewidth": 1.0},
+            boxprops={"linewidth": 0.75, "color": "#333333"},
+            whiskerprops={"linewidth": 0.75, "color": "#333333"},
+            capprops={"linewidth": 0.75, "color": "#333333"},
+        )
+        for patch, color in zip(box["boxes"], [FP.absolute_normal_color, FP.absolute_drought_color]):
+            patch.set_facecolor(color)
+            patch.set_alpha(0.45)
+
+        ax.scatter(
+            x_normal + rng.uniform(-FP.absolute_panel_a_jitter_half_width, FP.absolute_panel_a_jitter_half_width, len(normal_values)),
+            normal_values,
+            s=FP.absolute_panel_a_point_size,
+            color=FP.absolute_normal_color,
+            edgecolors="white",
+            linewidths=0.25,
+            alpha=FP.absolute_panel_a_point_alpha,
+            zorder=2,
+        )
+        ax.scatter(
+            x_drought + rng.uniform(-FP.absolute_panel_a_jitter_half_width, FP.absolute_panel_a_jitter_half_width, len(drought_values)),
+            drought_values,
+            s=FP.absolute_panel_a_point_size,
+            color=FP.absolute_drought_color,
+            edgecolors="white",
+            linewidths=0.25,
+            alpha=FP.absolute_panel_a_point_alpha,
+            zorder=2,
+        )
+
+        model_row = main.loc[main["Target_Class"].astype(str).eq(drought_class)]
+        if not model_row.empty:
+            row = model_row.iloc[0]
+            y_top = max(np.nanmax(normal_values), np.nanmax(drought_values))
+            ax.text(
+                center,
+                y_top + 0.045,
+                f"n_site={int(row['n_sites'])}, q{format_compact_p(row.get('DeltaCBI_p_FDR', np.nan))}",
+                ha="center",
+                va="bottom",
+                fontsize=FP.panel_a_text_size,
+                color="#222222",
+            )
+
+    ax.axhline(
+        FP.panel_b_reference_line_value,
+        color=FP.panel_b_reference_line_color,
+        linestyle="--",
+        lw=FP.panel_b_identity_linewidth,
+        zorder=0,
+    )
+    ax.set_xticks(np.arange(len(class_order)))
+    ax.set_xticklabels(class_order)
+    ax.set_xlabel("Drought class")
+    ax.set_ylabel("Site-month CBI")
+    y_min, y_max = finite_value_limits(
+        pd.concat([valid_pairs["Normal_CBI"], valid_pairs["Target_CBI"]], ignore_index=True),
+        fallback=(0.3, 1.3),
+        padding=0.14,
+    )
+    ax.set_ylim(y_min, y_max)
+    set_panel_title(ax, "A", "Paired absolute CBI contrasts")
+    ax.legend(
+        handles=[
+            Line2D([0], [0], marker="s", linestyle="None", markerfacecolor=FP.absolute_normal_color,
+                   markeredgecolor="#333333", markersize=6, label="Normal reference"),
+            Line2D([0], [0], marker="s", linestyle="None", markerfacecolor=FP.absolute_drought_color,
+                   markeredgecolor="#333333", markersize=6, label="Drought class"),
+        ],
+        frameon=False,
+        loc="upper left",
+        fontsize=FP.legend_font_size,
+    )
+
+
+def draw_panel_c_absolute(
+    ax: plt.Axes,
+    boundary: gpd.GeoDataFrame,
+    sites_summary: pd.DataFrame,
+    absolute_site_response: pd.DataFrame,
+    cbi_norm: mpl.colors.Normalize,
+) -> None:
+    """绝对 CBI 对比版 Fig.1C：干旱期站点中位绝对 CBI 空间分布。"""
+
+    boundary.plot(
+        ax=ax,
+        facecolor=FP.map_facecolor_c,
+        edgecolor=FP.map_edgecolor,
+        linewidth=FP.map_edgewidth,
+        zorder=1,
+    )
+    ax.scatter(
+        sites_summary["Longitude"],
+        sites_summary["Latitude"],
+        s=FP.panel_c_background_site_size,
+        c=FP.panel_c_background_site_color,
+        edgecolors="white",
+        linewidths=0.35,
+        zorder=2,
+    )
+    plot_sites = absolute_site_response.sort_values("Median_Drought_CBI", ascending=True)
+    ax.scatter(
+        plot_sites["Longitude"],
+        plot_sites["Latitude"],
+        s=FP.absolute_panel_c_response_size,
+        c=plot_sites["Median_Drought_CBI"],
+        cmap=FP.absolute_cmap,
+        norm=cbi_norm,
+        edgecolors=FP.panel_c_response_edgecolor,
+        linewidths=FP.panel_c_response_linewidth,
+        alpha=FP.panel_c_response_alpha,
+        zorder=3,
+    )
+    bounds = boundary.total_bounds
+    dx = bounds[2] - bounds[0]
+    dy = bounds[3] - bounds[1]
+    ax.set_xlim(bounds[0] - dx * FP.map_padding_fraction, bounds[2] + dx * FP.map_padding_fraction)
+    ax.set_ylim(bounds[1] - dy * FP.map_padding_fraction, bounds[3] + dy * FP.map_padding_fraction)
+    apply_lon_lat_tick_format(ax)
+    ax.set_xlabel("Longitude")
+    ax.set_ylabel("Latitude")
+    set_panel_title(ax, "C", "Spatial distribution of drought-period CBI")
+
+
+def draw_panel_d_absolute(
+    ax: plt.Axes,
+    absolute_site_response: pd.DataFrame,
+    cbi_norm: mpl.colors.Normalize,
+) -> None:
+    """绝对 CBI 对比版 Fig.1D：站点 Normal median CBI 到 drought median CBI 的成对迁移。"""
+
+    ordered = absolute_site_response.sort_values("Median_Drought_CBI", ascending=True).reset_index(drop=True)
+    y_positions = np.arange(len(ordered))
+    normal = pd.to_numeric(ordered["Median_Normal_CBI"], errors="coerce").to_numpy()
+    drought = pd.to_numeric(ordered["Median_Drought_CBI"], errors="coerce").to_numpy()
+    cbi_min, cbi_max = finite_value_limits(
+        pd.Series(np.concatenate([normal, drought])),
+        fallback=(0.3, 1.3),
+        padding=FP.absolute_cbi_limit_padding,
+    )
+
+    ax.axvline(
+        FP.panel_b_reference_line_value,
+        color=FP.panel_b_reference_line_color,
+        linestyle="--",
+        lw=FP.panel_b_identity_linewidth,
+        zorder=1,
+    )
+    for y, n_value, d_value in zip(y_positions, normal, drought):
+        ax.hlines(
+            y,
+            n_value,
+            d_value,
+            color=FP.absolute_panel_d_line_color,
+            alpha=FP.absolute_panel_d_line_alpha,
+            lw=FP.absolute_panel_d_linewidth,
+            zorder=1,
+        )
+    ax.scatter(
+        normal,
+        y_positions,
+        s=FP.absolute_panel_d_point_size,
+        color=FP.absolute_normal_color,
+        edgecolors=FP.panel_d_site_median_edgecolor,
+        linewidths=FP.panel_d_site_median_linewidth,
+        label="Normal median",
+        zorder=3,
+    )
+    ax.scatter(
+        drought,
+        y_positions,
+        s=FP.absolute_panel_d_point_size,
+        c=drought,
+        cmap=FP.absolute_cmap,
+        norm=cbi_norm,
+        edgecolors=FP.panel_d_site_median_edgecolor,
+        linewidths=FP.panel_d_site_median_linewidth,
+        label="Drought median",
+        zorder=4,
+    )
+    for y in y_positions:
+        ax.hlines(y, cbi_min, cbi_max, color=FP.panel_d_row_line_color, lw=FP.panel_d_row_linewidth, zorder=0)
+
+    ax.set_xlim(cbi_min, cbi_max)
+    ax.set_ylim(-0.75, len(ordered) - 0.25)
+    ax.set_yticks(y_positions)
+    ax.set_yticklabels([str(i + 1) for i in y_positions], fontsize=FP.tick_label_size)
+    ax.set_xlabel("Site median CBI")
+    ax.set_ylabel("Site rank by drought-period CBI")
+    set_panel_title(ax, "D", "Site-level Normal-to-drought CBI shift")
+    ax.legend(frameon=False, loc="lower right", fontsize=FP.legend_font_size)
+
+
+def add_absolute_cbi_colorbar(fig: plt.Figure, ax_c: plt.Axes, cbi_norm: mpl.colors.Normalize) -> None:
+    """给绝对 CBI 对比版 Fig.1C 添加干旱期 CBI 连续色标。"""
+
+    cax = ax_c.inset_axes(
+        [
+            FP.absolute_panel_c_colorbar_x,
+            FP.absolute_panel_c_colorbar_y,
+            FP.absolute_panel_c_colorbar_width,
+            FP.absolute_panel_c_colorbar_height,
+        ]
+    )
+    cbar = fig.colorbar(
+        mpl.cm.ScalarMappable(norm=cbi_norm, cmap=FP.absolute_cmap),
+        cax=cax,
+        orientation="horizontal",
+    )
+    cbar.set_label("Drought-period median CBI", labelpad=1, fontsize=FP.colorbar_label_size)
+    cbar.ax.xaxis.set_label_position("top")
+    cbar.ax.tick_params(labelsize=FP.colorbar_tick_size, length=2)
 
 
 # =============================================================================
@@ -1051,25 +1913,52 @@ def parameters_to_table() -> pd.DataFrame:
     rows: list[dict[str, object]] = []
     descriptions = {
         "extreme_spi_threshold": "极端干旱阈值；SPI30d <= 该值被视为 extreme drought。",
+        "severe_spi_threshold": "重度干旱边界；-2.0 < SPI30d <= -1.5 被视为 severe drought。",
+        "moderate_spi_threshold": "中度干旱边界；-1.5 < SPI30d <= -1.0 被视为 moderate drought。",
+        "normal_spi_low": "正常参考状态下界；Normal 为 -0.5 < SPI30d < 0.5。",
+        "normal_spi_high": "正常参考状态上界；Normal 为 -0.5 < SPI30d < 0.5。",
+        "min_site_month_status_cbi_hours": "重算 SiteMonth 状态 CBI 的最低逐小时样本量。",
+        "min_site_month_status_macro_sd": "重算 SiteMonth 状态 CBI 的最低 ERA5 温度标准差。",
         "figure_dpi": "PNG 输出分辨率；投稿图建议 600 dpi。",
         "fig_width": "组合图宽度，单位英寸。",
         "fig_height": "组合图高度，单位英寸。",
         "grid_wspace": "左右面板水平间距；增大可减少面板拥挤。",
         "grid_hspace": "上下两行面板间距；增大可避免色标和标题重叠。",
-        "panel_a_event_size_min": "Fig.1A 极端事件站点最小点面积。",
-        "panel_a_event_size_max": "Fig.1A 极端事件站点最大点面积。",
-        "panel_a_timeline_linewidth": "Fig.1A 插图中每日极端干旱站点比例折线宽度。",
+        "panel_a_marker_size": "Fig.1A 主模型点估计圆点面积。",
+        "panel_a_restricted_marker_size": "Fig.1A common-support 对照模型方块面积。",
+        "panel_a_ci_linewidth": "Fig.1A 95% CI 误差线线宽。",
         "delta_cmap": "Fig.1B/C ΔCBI 发散色带；当前红色为增加、蓝色为降低。",
-        "panel_b_identity_linewidth": "Fig.1B y=x 参考线宽度。",
-        "panel_b_identity_linestyle": "Fig.1B y=x 参考线线型。",
-        "panel_b_hist_bins": "Fig.1B 插图 Delta_CBI 直方图分箱数量。",
-        "panel_c_response_size_min": "Fig.1C 有效配对站点最小点面积。",
-        "panel_c_response_size_max": "Fig.1C 有效配对站点最大点面积。",
-        "panel_d_spi_cmap": "Fig.1D 事件点按最低 SPI30d 着色的色带。",
-        "panel_d_event_point_size": "Fig.1D 单个事件点大小。",
-        "panel_d_jitter_half_width": "Fig.1D 同站点事件点的上下抖动半宽，避免点完全重叠。",
-        "delta_colorbar_y": "Fig.1B/C ΔCBI 色标相对位置 y；负值表示放在面板下方。",
-        "spi_colorbar_y": "Fig.1D SPI 色标相对位置 y；负值表示放在面板下方。",
+        "site_delta_limit_padding": "Fig.1C/D 站点中位 Delta_CBI 色标和 D 横轴的范围扩展倍数。",
+        "panel_b_identity_linewidth": "Fig.1B CBI=1 无缓冲参考线宽度。",
+        "panel_b_identity_linestyle": "Fig.1B CBI=1 无缓冲参考线线型。",
+        "panel_b_median_label_offset_fraction": "Fig.1B median 标签高于箱线图上须横线的距离比例。",
+        "panel_c_response_size": "Fig.1C 有效配对站点统一点面积；N_pairs 不再映射为点大小。",
+        "panel_c_delta_colorbar_x": "Fig.1C ΔCBI 色标相对位置 x。",
+        "panel_c_delta_colorbar_y": "Fig.1C ΔCBI 色标相对位置 y。",
+        "panel_c_delta_colorbar_width": "Fig.1C ΔCBI 色标相对宽度。",
+        "panel_c_delta_colorbar_height": "Fig.1C ΔCBI 色标相对高度。",
+        "panel_d_site_median_size": "Fig.1D 站点中位 Delta_CBI 端点面积。",
+        "panel_d_lollipop_linewidth": "Fig.1D 棒棒糖线段宽度。",
+        "panel_d_iqr_linewidth": "优化版 Fig.1D 站点内 Delta_CBI IQR 横线宽度。",
+        "panel_d_iqr_alpha": "优化版 Fig.1D 站点内 Delta_CBI IQR 横线透明度。",
+        "panel_d_iqr_axis_padding": "优化版 Fig.1D 按 Q25/Q75/median 定横轴范围时的扩展倍数。",
+        "panel_d_extreme_label_count": "Fig.1D 在高低两端各标注的站点数量。",
+        "absolute_normal_color": "绝对 CBI 对比版 Normal reference 的颜色。",
+        "absolute_drought_color": "绝对 CBI 对比版 Drought class 的颜色。",
+        "absolute_cmap": "绝对 CBI 对比版 C/D 面板干旱期 CBI 连续色带。",
+        "absolute_cbi_limit_padding": "绝对 CBI 对比版坐标轴和色标范围扩展比例。",
+        "absolute_panel_a_pair_line_alpha": "绝对 CBI 对比版 A 面板配对连线透明度。",
+        "absolute_panel_a_box_width": "绝对 CBI 对比版 A 面板箱线图宽度。",
+        "absolute_panel_a_point_size": "绝对 CBI 对比版 A 面板散点大小。",
+        "absolute_panel_a_jitter_half_width": "绝对 CBI 对比版 A 面板散点水平抖动半宽。",
+        "absolute_panel_c_response_size": "绝对 CBI 对比版 C 面板站点点面积。",
+        "absolute_panel_c_colorbar_x": "绝对 CBI 对比版 C 面板色标相对位置 x。",
+        "absolute_panel_c_colorbar_y": "绝对 CBI 对比版 C 面板色标相对位置 y。",
+        "absolute_panel_c_colorbar_width": "绝对 CBI 对比版 C 面板色标相对宽度。",
+        "absolute_panel_c_colorbar_height": "绝对 CBI 对比版 C 面板色标相对高度。",
+        "absolute_panel_d_line_alpha": "绝对 CBI 对比版 D 面板 Normal-to-drought 连线透明度。",
+        "absolute_panel_d_linewidth": "绝对 CBI 对比版 D 面板 Normal-to-drought 连线宽度。",
+        "absolute_panel_d_point_size": "绝对 CBI 对比版 D 面板站点中位数点面积。",
     }
 
     for name, value in asdict(CFG).items():
@@ -1095,31 +1984,67 @@ def parameters_to_table() -> pd.DataFrame:
 
 def write_outputs(
     fig: plt.Figure,
+    fig_optimized: plt.Figure,
+    fig_absolute: plt.Figure,
     sites_summary: pd.DataFrame,
-    extreme_events: pd.DataFrame,
+    forest_data: pd.DataFrame,
     valid_pairs: pd.DataFrame,
     site_response: pd.DataFrame,
+    absolute_site_response: pd.DataFrame,
 ) -> pd.DataFrame:
     """保存所有图、表和参数说明，文件名全部使用中文。"""
 
     CFG.output_dir.mkdir(parents=True, exist_ok=True)
-    with progress_bar("步骤4/5 保存图表与参数", 8, "magenta") as bar:
+    with progress_bar("步骤4/5 保存图表与参数", 15, "magenta") as bar:
         fig.savefig(CFG.output_dir / "图1_现象图_主图.png", dpi=CFG.figure_dpi)
         bar.update()
 
         fig.savefig(CFG.output_dir / "图1_现象图_主图.pdf")
         bar.update()
 
-        sites_summary.to_csv(CFG.output_dir / "图1A_站点极端干旱事件次数表.csv", index=False, encoding="utf-8-sig")
+        fig_optimized.savefig(CFG.output_dir / "图1_现象图_主图_优化版.png", dpi=CFG.figure_dpi)
         bar.update()
 
-        extreme_events.to_csv(CFG.output_dir / "图1A_极端干旱事件明细表.csv", index=False, encoding="utf-8-sig")
+        fig_optimized.savefig(CFG.output_dir / "图1_现象图_主图_优化版.pdf")
         bar.update()
 
-        valid_pairs.to_csv(CFG.output_dir / "图1B和图1D_有效事件站点配对表.csv", index=False, encoding="utf-8-sig")
+        fig_absolute.savefig(CFG.output_dir / "图1_现象图_主图_绝对CBI对比版.png", dpi=CFG.figure_dpi)
         bar.update()
 
-        site_response.to_csv(CFG.output_dir / "图1C和图1D_站点DeltaCBI汇总表.csv", index=False, encoding="utf-8-sig")
+        fig_absolute.savefig(CFG.output_dir / "图1_现象图_主图_绝对CBI对比版.pdf")
+        bar.update()
+
+        sites_summary.to_csv(CFG.output_dir / "图1C_全部站点坐标表.csv", index=False, encoding="utf-8-sig")
+        bar.update()
+
+        forest_data.to_csv(CFG.output_dir / "图1A_多等级DeltaCBI森林图底层数据.csv", index=False, encoding="utf-8-sig")
+        bar.update()
+
+        valid_pairs.to_csv(CFG.output_dir / "图1B和图1D_五级SiteMonth有效配对表.csv", index=False, encoding="utf-8-sig")
+        bar.update()
+
+        site_response.to_csv(CFG.output_dir / "图1C和图1D_五级站点DeltaCBI汇总表.csv", index=False, encoding="utf-8-sig")
+        bar.update()
+
+        site_response[
+            [
+                "Site_ID",
+                "Median_Delta_CBI",
+                "Q25_Delta_CBI",
+                "Q75_Delta_CBI",
+                "N_pairs",
+                "N_classes",
+                "Longitude",
+                "Latitude",
+            ]
+        ].to_csv(CFG.output_dir / "图1D_站点中位数与IQR排序图底层数据.csv", index=False, encoding="utf-8-sig")
+        bar.update()
+
+        absolute_site_response.to_csv(
+            CFG.output_dir / "图1_绝对CBI对比版_站点Normal与干旱期CBI汇总表.csv",
+            index=False,
+            encoding="utf-8-sig",
+        )
         bar.update()
 
         parameters_to_table().to_csv(CFG.output_dir / "00_现象图绘图参数说明表.csv", index=False, encoding="utf-8-sig")
@@ -1129,15 +2054,23 @@ def write_outputs(
             [
                 {
                     "总站点数": int(sites_summary["Site_ID"].nunique()),
-                    "出现极端干旱事件的站点数": int((sites_summary["Extreme_events"] > 0).sum()),
-                    "有效事件站点配对数": int(len(valid_pairs)),
-                    "有有效配对的站点数": int(valid_pairs["Site_ID"].nunique()),
+                    "多等级森林图模型记录数": int(len(forest_data)),
+                    "五级SiteMonth有效配对数": int(len(valid_pairs)),
+                    "有五级有效配对的站点数": int(valid_pairs["Site_ID"].nunique()),
+                    "Mild有效配对数": int(valid_pairs["Target_Class"].astype(str).eq("Mild").sum()),
+                    "Moderate有效配对数": int(valid_pairs["Target_Class"].astype(str).eq("Moderate").sum()),
+                    "Severe有效配对数": int(valid_pairs["Target_Class"].astype(str).eq("Severe").sum()),
+                    "Extreme有效配对数": int(valid_pairs["Target_Class"].astype(str).eq("Extreme").sum()),
                     "Delta_CBI均值": float(valid_pairs["Delta_CBI"].mean()),
                     "Delta_CBI中位数": float(valid_pairs["Delta_CBI"].median()),
                     "Delta_CBI为正的配对数": int((valid_pairs["Delta_CBI"] > 0).sum()),
                     "Delta_CBI为负的配对数": int((valid_pairs["Delta_CBI"] < 0).sum()),
                     "PNG图件": str(CFG.output_dir / "图1_现象图_主图.png"),
                     "PDF图件": str(CFG.output_dir / "图1_现象图_主图.pdf"),
+                    "优化版PNG图件": str(CFG.output_dir / "图1_现象图_主图_优化版.png"),
+                    "优化版PDF图件": str(CFG.output_dir / "图1_现象图_主图_优化版.pdf"),
+                    "绝对CBI对比版PNG图件": str(CFG.output_dir / "图1_现象图_主图_绝对CBI对比版.png"),
+                    "绝对CBI对比版PDF图件": str(CFG.output_dir / "图1_现象图_主图_绝对CBI对比版.pdf"),
                 }
             ]
         )
@@ -1188,15 +2121,17 @@ def make_figure() -> None:
     setup_style()
     CFG.output_dir.mkdir(parents=True, exist_ok=True)
 
-    boundary, sites, events, pairs, spi_wide = read_inputs()
-    sites_summary, extreme_events, valid_pairs, site_response, timeline = prepare_data(
-        sites, events, pairs, spi_wide
+    boundary, sites, hourly, pair_audit, lmm_summary, lmm_restricted, trend_test = read_inputs()
+    sites_summary, forest_data, valid_pairs, site_response = prepare_data(
+        sites, hourly, pair_audit, lmm_summary, lmm_restricted
     )
 
     if valid_pairs.empty:
-        raise ValueError("No valid event-reference CBI pairs were found.")
+        raise ValueError("No valid multi-level SiteMonth CBI pairs were found.")
     if site_response.empty:
         raise ValueError("No site-level CBI response summaries were found.")
+
+    absolute_site_response = build_absolute_site_response(valid_pairs, sites_summary)
 
     with progress_bar("步骤3/5 绘制四个面板", 8, "yellow") as bar:
         delta_limit = finite_symmetric_limit(
@@ -1204,6 +2139,12 @@ def make_figure() -> None:
             fallback=0.25,
         )
         delta_norm = TwoSlopeNorm(vmin=-delta_limit, vcenter=0, vmax=delta_limit)
+        site_delta_limit = finite_symmetric_limit_with_padding(
+            site_response["Median_Delta_CBI"],
+            fallback=0.10,
+            padding=FP.site_delta_limit_padding,
+        )
+        site_delta_norm = TwoSlopeNorm(vmin=-site_delta_limit, vcenter=0, vmax=site_delta_limit)
         bar.update()
 
         fig = plt.figure(figsize=(FP.fig_width, FP.fig_height), constrained_layout=False)
@@ -1223,47 +2164,19 @@ def make_figure() -> None:
         ax_d = fig.add_subplot(grid[1, 1])
         bar.update()
 
-        draw_panel_a(ax_a, boundary, sites_summary, timeline)
+        draw_panel_a(ax_a, forest_data, trend_test)
         bar.update()
 
         draw_panel_b(ax_b, valid_pairs, delta_norm)
         bar.update()
 
-        draw_panel_c(ax_c, boundary, sites_summary, site_response, delta_norm)
+        draw_panel_c(ax_c, boundary, sites_summary, site_response, site_delta_norm)
         bar.update()
 
-        spi_scatter = draw_panel_d(ax_d, valid_pairs, site_response)
+        draw_panel_d(ax_d, site_response, site_delta_norm, site_delta_limit)
         bar.update()
 
-        cax_delta = ax_b.inset_axes(
-            [
-                FP.delta_colorbar_x,
-                FP.delta_colorbar_y,
-                FP.delta_colorbar_width,
-                FP.delta_colorbar_height,
-            ]
-        )
-        cbar_delta = fig.colorbar(
-            mpl.cm.ScalarMappable(norm=delta_norm, cmap=FP.delta_cmap),
-            cax=cax_delta,
-            orientation="horizontal",
-        )
-        cbar_delta.set_label("ΔCBI (event - reference)", labelpad=1, fontsize=FP.colorbar_label_size)
-        cbar_delta.ax.xaxis.set_label_position("top")
-        cbar_delta.ax.tick_params(labelsize=FP.colorbar_tick_size, length=2)
-
-        cax_spi = ax_d.inset_axes(
-            [
-                FP.spi_colorbar_x,
-                FP.spi_colorbar_y,
-                FP.spi_colorbar_width,
-                FP.spi_colorbar_height,
-            ]
-        )
-        cbar_spi = fig.colorbar(spi_scatter, cax=cax_spi, orientation="horizontal")
-        cbar_spi.set_label("Minimum SPI30d during event", labelpad=1, fontsize=FP.colorbar_label_size)
-        cbar_spi.ax.xaxis.set_label_position("top")
-        cbar_spi.ax.tick_params(labelsize=FP.colorbar_tick_size, length=2)
+        add_panel_c_colorbar(fig, ax_c, site_delta_norm)
         bar.update()
 
         fig.suptitle(
@@ -1274,8 +2187,121 @@ def make_figure() -> None:
         )
         bar.update()
 
-    summary = write_outputs(fig, sites_summary, extreme_events, valid_pairs, site_response)
+    with progress_bar("步骤3b/5 绘制优化版四个面板", 8, "cyan") as bar:
+        fig_optimized = plt.figure(figsize=(FP.fig_width, FP.fig_height), constrained_layout=False)
+        grid_opt = fig_optimized.add_gridspec(
+            2,
+            2,
+            left=FP.grid_left,
+            right=FP.grid_right,
+            bottom=FP.grid_bottom,
+            top=FP.grid_top,
+            wspace=FP.grid_wspace,
+            hspace=FP.grid_hspace,
+        )
+        ax_a_opt = fig_optimized.add_subplot(grid_opt[0, 0])
+        ax_b_opt = fig_optimized.add_subplot(grid_opt[0, 1])
+        ax_c_opt = fig_optimized.add_subplot(grid_opt[1, 0])
+        ax_d_opt = fig_optimized.add_subplot(grid_opt[1, 1])
+        bar.update()
+
+        draw_panel_a_optimized(ax_a_opt, forest_data, trend_test)
+        bar.update()
+
+        draw_panel_b(ax_b_opt, valid_pairs, delta_norm)
+        bar.update()
+
+        draw_panel_c(ax_c_opt, boundary, sites_summary, site_response, site_delta_norm)
+        bar.update()
+
+        draw_panel_d_optimized(ax_d_opt, site_response, site_delta_norm, site_delta_limit)
+        bar.update()
+
+        add_panel_c_colorbar(fig_optimized, ax_c_opt, site_delta_norm)
+        bar.update()
+
+        fig_optimized.suptitle(
+            "Spatial heterogeneity in drought-induced microclimate buffering responses",
+            fontsize=FP.suptitle_size,
+            fontweight="bold",
+            y=FP.suptitle_y,
+        )
+        bar.update()
+
+        fig_optimized.canvas.draw_idle()
+        bar.update()
+
+    with progress_bar("步骤3c/5 绘制绝对CBI对比版四个面板", 8, "green") as bar:
+        absolute_values = pd.concat(
+            [
+                valid_pairs["Normal_CBI"],
+                valid_pairs["Target_CBI"],
+                absolute_site_response["Median_Normal_CBI"],
+                absolute_site_response["Median_Drought_CBI"],
+            ],
+            ignore_index=True,
+        )
+        cbi_min, cbi_max = finite_value_limits(
+            absolute_values,
+            fallback=(0.3, 1.3),
+            padding=FP.absolute_cbi_limit_padding,
+        )
+        cbi_norm = mpl.colors.Normalize(vmin=cbi_min, vmax=cbi_max)
+        bar.update()
+
+        fig_absolute = plt.figure(figsize=(FP.fig_width, FP.fig_height), constrained_layout=False)
+        grid_abs = fig_absolute.add_gridspec(
+            2,
+            2,
+            left=FP.grid_left,
+            right=FP.grid_right,
+            bottom=FP.grid_bottom,
+            top=FP.grid_top,
+            wspace=FP.grid_wspace,
+            hspace=FP.grid_hspace,
+        )
+        ax_a_abs = fig_absolute.add_subplot(grid_abs[0, 0])
+        ax_b_abs = fig_absolute.add_subplot(grid_abs[0, 1])
+        ax_c_abs = fig_absolute.add_subplot(grid_abs[1, 0])
+        ax_d_abs = fig_absolute.add_subplot(grid_abs[1, 1])
+        bar.update()
+
+        draw_panel_a_absolute(ax_a_abs, valid_pairs, forest_data)
+        bar.update()
+
+        draw_panel_b(ax_b_abs, valid_pairs, delta_norm)
+        bar.update()
+
+        draw_panel_c_absolute(ax_c_abs, boundary, sites_summary, absolute_site_response, cbi_norm)
+        bar.update()
+
+        draw_panel_d_absolute(ax_d_abs, absolute_site_response, cbi_norm)
+        bar.update()
+
+        add_absolute_cbi_colorbar(fig_absolute, ax_c_abs, cbi_norm)
+        bar.update()
+
+        fig_absolute.suptitle(
+            "Absolute CBI contrasts between normal and drought conditions",
+            fontsize=FP.suptitle_size,
+            fontweight="bold",
+            y=FP.suptitle_y,
+        )
+        bar.update()
+
+    summary = write_outputs(
+        fig,
+        fig_optimized,
+        fig_absolute,
+        sites_summary,
+        forest_data,
+        valid_pairs,
+        site_response,
+        absolute_site_response,
+    )
     plt.close(fig)
+    plt.close(fig_optimized)
+    plt.close(fig_absolute)
 
     cleanup_runtime_cache()
     print(summary.to_string(index=False))
