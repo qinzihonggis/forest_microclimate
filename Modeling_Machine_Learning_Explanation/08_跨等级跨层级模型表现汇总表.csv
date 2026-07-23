@@ -6,4 +6,4 @@ Moderate,site_month,114,11,Leave-One-Site-Out,-0.0004460800261947284,0.117379454
 Severe,site,23,11,Leave-One-Out,0.13065299314007195,0.08075898044400999,0.09055228234858838,0.009793301904578389,Baseline uses training-fold mean for each validation fold.
 Severe,site_month,44,11,Leave-One-Site-Out,0.03553388275365177,0.11119404948447326,0.1167866733226414,0.005592623838168137,Baseline uses training-fold mean for each validation fold.
 Extreme,site,13,11,Leave-One-Out,-0.6025300326878513,0.0940412339428445,0.0804780299528931,-0.013563203989951395,Baseline uses training-fold mean for each validation fold.
-Extreme,site_month,16,11,Leave-One-Site-Out,-0.47658500421748395,0.09100973375063778,0.07991377557527712,-0.01109595817536066,Baseline uses training-fold mean for each validation fold.
+Extreme,site_month,16,11,Leave-One-Site-Out,-0.4765850042174842,0.0910097337506378,0.07991377557527712,-0.011095958175360673,Baseline uses training-fold mean for each validation fold.
