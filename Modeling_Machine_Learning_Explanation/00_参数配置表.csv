@@ -1,6 +1,8 @@
 ﻿parameter,value
 project_dir,E:\forest_microclimate\ForestMicroclimate
 output_dir,E:\forest_microclimate\ForestMicroclimate\results\Modeling_Machine_Learning_Explanation
+python_env_dir,D:\ProgramData\anaconda3\envs\gee
+python_interpreter,D:\ProgramData\anaconda3\envs\gee\python.exe
 hourly_temperature_csv,E:\forest_microclimate\ForestMicroclimate\results\时间序列图\逐小时温度对齐表.csv
 spi_daily_wide_xlsx,E:\forest_microclimate\ForestMicroclimate\results\daily_SPI_result\各站点SPI30d逐日宽表_2025.xlsx
 static_site_csv,E:\forest_microclimate\ForestMicroclimate\Tensor_LatLong.csv
@@ -30,5 +32,9 @@ n_stability_seeds,5
 n_permutation_repeats,5
 enable_shap,False
 enable_cv_permutation,False
+run_levels,"('Mild', 'Moderate', 'Severe', 'Extreme')"
+run_layers,"('site', 'site_month')"
 FEATURES_TO_DROP,
-HAS_SHAP,False
+HAS_SHAP,True
+HAS_DOCX,True
+RUNTIME_CACHE_DIR,E:\forest_microclimate\ForestMicroclimate\results\Modeling_Machine_Learning_Explanation\本次运行临时缓存_1784796014

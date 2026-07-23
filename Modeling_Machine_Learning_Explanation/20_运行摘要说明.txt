@@ -5,7 +5,7 @@
 E:\forest_microclimate\ForestMicroclimate\results\Modeling_Machine_Learning_Explanation
 
 核心基础表：
-site_month_delta_cbi_by_level.csv
+01_四等级站点月缓冲变化基础表.csv
 
 基础表粒度：
 Site_ID x YearMonth x DroughtLevel
@@ -29,9 +29,14 @@ MacroSD 仍保留为审计字段。
 4. 缺失值按列剔除和中位数填补，不再整行删除。
 5. 坡向转换为 aspect_sin / aspect_cos。
 6. soil_type 若存在则 one-hot。
-7. 高相关变量对输出到 high_corr_pairs_*.csv；正式解读前建议在 FEATURES_TO_DROP 中人工筛选后重跑。
-8. CV-SHAP 重要性优先；若 shap 不可用，则使用 RF impurity importance 作为 fallback。
-9. CV permutation importance 只在验证折样本数 >= 3 时计算；LOO 中该指标可能为空。
+7. 高相关变量对输出到“高相关变量对审计表”；正式解读前建议在 FEATURES_TO_DROP 中人工筛选后重跑。
+8. SHAP 默认关闭以保证全流程可运行；若 CFG.enable_shap=True 且 shap 可用，则使用 CV-SHAP。
+   默认使用验证折模型的 RF impurity importance 作为 CV fallback。
+9. CV permutation importance 默认关闭以保证四等级全流程可运行；
+   如需单个组合深度解释，可将 CFG.enable_cv_permutation=True 后重跑。
+10. 图像和进度条参数记录在：00_绘图与进度条参数说明表.csv
+11. 完整方法说明书记录在：00_机器学习解释建模方法说明书.docx
+12. 本次运行临时缓存清理记录在：21_本次运行临时缓存清理记录.csv
 
 运行耗时：
-5243.5 秒
+61.1 秒

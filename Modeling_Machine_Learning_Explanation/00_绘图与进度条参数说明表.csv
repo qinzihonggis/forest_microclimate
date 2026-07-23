@@ -1,0 +1,25 @@
+﻿参数类别,参数名,当前值,用途
+绘图参数,importance_fig_width,8.0,控制变量重要性图的尺寸、颜色、透明度、字体或DPI
+绘图参数,importance_base_height,4.0,控制变量重要性图的尺寸、颜色、透明度、字体或DPI
+绘图参数,importance_height_per_feature,0.35,控制变量重要性图的尺寸、颜色、透明度、字体或DPI
+绘图参数,importance_bar_color,#3b7a8f,控制变量重要性图的尺寸、颜色、透明度、字体或DPI
+绘图参数,importance_bar_alpha,0.85,控制变量重要性图的尺寸、颜色、透明度、字体或DPI
+绘图参数,importance_errorbar_color,#264653,控制变量重要性图的尺寸、颜色、透明度、字体或DPI
+绘图参数,importance_dpi,300,控制变量重要性图的尺寸、颜色、透明度、字体或DPI
+绘图参数,title_fontsize,13,控制变量重要性图的尺寸、颜色、透明度、字体或DPI
+绘图参数,axis_label_fontsize,11,控制变量重要性图的尺寸、颜色、透明度、字体或DPI
+绘图参数,tick_label_fontsize,10,控制变量重要性图的尺寸、颜色、透明度、字体或DPI
+绘图参数,legend_fontsize,10,控制变量重要性图的尺寸、颜色、透明度、字体或DPI
+绘图参数,line_width,2.0,控制变量重要性图的尺寸、颜色、透明度、字体或DPI
+绘图参数,line_alpha,0.9,控制变量重要性图的尺寸、颜色、透明度、字体或DPI
+绘图参数,font_candidates,"Microsoft YaHei, SimHei, SimSun, Arial Unicode MS",控制变量重要性图的尺寸、颜色、透明度、字体或DPI
+进度条参数,bar_format,"{l_bar}{bar}| {percentage:3.0f}% {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]",控制tqdm单行动态进度条显示格式
+进度条参数,leave,False,控制tqdm单行动态进度条显示格式
+进度条参数,dynamic_ncols,True,控制tqdm单行动态进度条显示格式
+进度条颜色,读取,cyan,不同类型关键步骤的彩色进度条颜色
+进度条颜色,构建,green,不同类型关键步骤的彩色进度条颜色
+进度条颜色,聚合,yellow,不同类型关键步骤的彩色进度条颜色
+进度条颜色,建模,magenta,不同类型关键步骤的彩色进度条颜色
+进度条颜色,绘图,red,不同类型关键步骤的彩色进度条颜色
+进度条颜色,输出,blue,不同类型关键步骤的彩色进度条颜色
+进度条颜色,清理,white,不同类型关键步骤的彩色进度条颜色

@@ -1,4 +1,6 @@
 ﻿name,path,exists
+python_env_dir,D:\ProgramData\anaconda3\envs\gee,True
+python_interpreter,D:\ProgramData\anaconda3\envs\gee\python.exe,True
 hourly_temperature_csv,E:\forest_microclimate\ForestMicroclimate\results\时间序列图\逐小时温度对齐表.csv,True
 spi_daily_wide_xlsx,E:\forest_microclimate\ForestMicroclimate\results\daily_SPI_result\各站点SPI30d逐日宽表_2025.xlsx,True
 static_site_csv,E:\forest_microclimate\ForestMicroclimate\Tensor_LatLong.csv,True

@@ -1,9 +1,0 @@
-﻿DroughtLevel,Layer,n_samples,n_features,CV_method,R2_cv,RMSE_cv,Baseline_RMSE_cv,RMSE_improvement_vs_baseline,note
-Mild,site,27,11,5-fold CV,0.26510271473531555,0.04755553900004441,0.05693963886706044,0.009384099867016028,Baseline uses training-fold mean for each validation fold.
-Mild,site_month,159,11,Leave-One-Site-Out,0.08741338102719198,0.12191341253514774,0.12849790368616124,0.006584491151013491,Baseline uses training-fold mean for each validation fold.
-Moderate,site,26,11,5-fold CV,-0.3211779302299149,0.08228493467266121,0.07393164439479188,-0.008353290277869324,Baseline uses training-fold mean for each validation fold.
-Moderate,site_month,114,11,Leave-One-Site-Out,0.03030731140564369,0.11556126955000906,0.11883659180383752,0.0032753222538284554,Baseline uses training-fold mean for each validation fold.
-Severe,site,23,11,Leave-One-Out,0.12060224116648577,0.08122447690483485,0.09055228234858838,0.009327805443753528,Baseline uses training-fold mean for each validation fold.
-Severe,site_month,44,11,Leave-One-Site-Out,0.04668911848725177,0.11054913133714825,0.1167866733226414,0.006237541985493145,Baseline uses training-fold mean for each validation fold.
-Extreme,site,13,11,Leave-One-Out,-0.5697266376875556,0.09307375689318462,0.0804780299528931,-0.012595726940291513,Baseline uses training-fold mean for each validation fold.
-Extreme,site_month,16,11,Leave-One-Site-Out,-0.5159838749311076,0.09221592097923993,0.07991377557527712,-0.012302145403962808,Baseline uses training-fold mean for each validation fold.
